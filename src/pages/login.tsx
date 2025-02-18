@@ -1,0 +1,179 @@
+import React from "react";
+import { Button, Input, Checkbox, Link, Form, Divider } from "@heroui/react";
+import { Icon } from "@iconify/react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios, { AxiosError } from "axios";
+import { AcmeIcon } from "@/components/acme";
+import useAuthStore from "@/store/authStore";
+import { useNavigate } from "react-router-dom";
+
+const loginSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(
+      /[^A-Za-z0-9]/,
+      "Password must contain at least one special character"
+    ),
+});
+
+type LoginFormInputs = z.infer<typeof loginSchema>;
+
+export default function LoginPage() {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const { login } = useAuthStore();
+  const navigate = useNavigate();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    setError,
+  } = useForm<LoginFormInputs>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const toggleVisibility = () => setIsVisible(!isVisible);
+
+  const onSubmit = async (data: LoginFormInputs) => {
+    try {
+      const response = await axios.post(
+        import.meta.env.VITE_API_URL + "/auth/login",
+        data,
+        { withCredentials: true }
+      );
+      if (response.status === 200) {
+        login(response.data.token);
+        // Redirect to dashboard or any other page
+        navigate("/dashboard", {
+          replace: true,
+        });
+      }
+    } catch (error) {
+      console.error("Login failed", error);
+      if (error instanceof AxiosError) {
+        setError("root", {
+          message:
+            error.response?.data.message ?? "Failed to login please try again",
+        });
+      }
+
+      // Handle error (e.g., show error message to the user)
+    }
+  };
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center">
+      <div className="flex w-full max-w-sm flex-col gap-4 rounded-large">
+        <div className="flex flex-col items-center pb-2">
+          <AcmeIcon size={60} />
+          <p className="text-xl font-medium">Welcome Back</p>
+          <p className="text-small text-default-500">
+            Log in to your account to continue
+          </p>
+          <Link
+            href="/"
+            className="flex justify-center w-full text-center text-sm cursor-pointer my-4"
+          >
+            <Icon className="w-5 h-5" icon={"mdi-light:home"} />
+            <span>Home</span>
+          </Link>
+        </div>
+        <Form
+          className="flex flex-col gap-3"
+          validationBehavior="native"
+          onSubmit={handleSubmit(onSubmit)}
+        >
+          <Input
+            isRequired
+            label="Email Address"
+            placeholder="Enter your email"
+            type="email"
+            variant="bordered"
+            {...register("email")}
+            // isInvalid={errors.email?.message ? true : false}
+            // errorMessage={errors.email?.message}
+          />
+          <Input
+            isRequired
+            endContent={
+              <button type="button" onClick={toggleVisibility}>
+                {isVisible ? (
+                  <Icon
+                    className="pointer-events-none text-2xl text-default-400"
+                    icon="solar:eye-closed-linear"
+                  />
+                ) : (
+                  <Icon
+                    className="pointer-events-none text-2xl text-default-400"
+                    icon="solar:eye-bold"
+                  />
+                )}
+              </button>
+            }
+            label="Password"
+            placeholder="Enter your password"
+            type={isVisible ? "text" : "password"}
+            variant="bordered"
+            {...register("password")}
+            isInvalid={errors.password?.message ? true : false}
+            errorMessage={errors.password?.message}
+          />
+          <div className="flex w-full items-center justify-between px-1 py-2">
+            <Checkbox name="remember" size="sm">
+              Remember me
+            </Checkbox>
+            <Link className="text-default-500" href="#" size="sm">
+              Forgot password?
+            </Link>
+          </div>
+          <Button
+            className="w-full"
+            color="primary"
+            type="submit"
+            disabled={isSubmitting}
+          >
+            Sign In
+          </Button>
+          {errors?.root && (
+            <label className="w-full text-center text-red-600">
+              {errors.root.message}
+            </label>
+          )}
+        </Form>
+        <div className="flex items-center gap-4 py-2">
+          <Divider className="flex-1" />
+          <p className="shrink-0 text-tiny text-default-500">OR</p>
+          <Divider className="flex-1" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Button
+            startContent={<Icon icon="flat-color-icons:google" width={24} />}
+            variant="bordered"
+          >
+            Continue with Google
+          </Button>
+          <Button
+            startContent={
+              <Icon className="text-default-500" icon="fe:github" width={24} />
+            }
+            variant="bordered"
+          >
+            Continue with Github
+          </Button>
+        </div>
+        <p className="text-center text-small">
+          Need to create an account?&nbsp;
+          <Link href="/signup" size="sm">
+            Sign Up
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
