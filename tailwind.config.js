@@ -1,4 +1,5 @@
 import { heroui } from "@heroui/theme"
+import tailwindGradient from "tailwind-gradient-mask-image";
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -10,7 +11,11 @@ module.exports = {
     "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      width: {
+        '88': '22rem'
+      }
+    },
   },
   darkMode: "class",
   plugins: [heroui(
@@ -36,6 +41,7 @@ module.exports = {
               foreground: "#ffffff",
             },
             focus: "#F182F6",
+            background2: "#1a0330",
           },
           layout: {
             disabledOpacity: "0.3",
@@ -53,5 +59,5 @@ module.exports = {
         },
       }
     }
-  )],
+  ), tailwindGradient],
 }

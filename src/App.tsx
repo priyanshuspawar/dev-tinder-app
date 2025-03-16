@@ -4,11 +4,16 @@ import ProtectedRoute from "@/components/protected-route";
 import Home from "./pages/home";
 import Signup from "./pages/signup";
 import Dashboard from "./pages/dashboard";
+import DashboardLayout from "./pages/layouts/dashboardLayout";
 import NotFound from "./pages/not-fount";
 import Login from "./pages/login";
 import PublicRoute from "./components/public-route";
 import { Suspense, useEffect } from "react";
 import useAuthStore from "./store/authStore";
+import ProfileView from "./pages/profile-view";
+import ProfileEdit from "./pages/profile-edit";
+import DocsPage from "./pages/about";
+import { Spinner } from "@heroui/react";
 
 const App = () => {
   const checkAuthStatus = useAuthStore((state) => state.checkAuthStatus);
@@ -17,20 +22,35 @@ const App = () => {
     checkAuthStatus();
   }, [checkAuthStatus]);
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
   }
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="h-screen w-screen flex items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      }
+    >
       <Routes>
         {/* Public Routes */}
         <Route element={<PublicRoute />}>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/about" element={<DocsPage />} />
         </Route>
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="profile" element={<ProfileView />} />
+            <Route path="profile/edit" element={<ProfileEdit />} />
+          </Route>
           {/* Add more protected routes here */}
         </Route>
 

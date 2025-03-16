@@ -27,6 +27,9 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const [isVisible, setIsVisible] = React.useState(false);
+  const [rememberMe, setRememberMe] = React.useState<boolean>(
+    localStorage?.getItem("rememberMe") === "true"
+  );
   const { login } = useAuthStore();
   const navigate = useNavigate();
 
@@ -37,19 +40,42 @@ export default function LoginPage() {
     setError,
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: (localStorage.getItem("email") as string) || "",
+      password: (localStorage.getItem("password") as string) || "",
+    },
   });
-
+  // useEffect(() => {
+  //   const remember = localStorage.getItem("rememberMe") === "true";
+  //   console.log("@@check", remember);
+  //   if (remember) {
+  //     setRememberMe(true);
+  //     const email = localStorage.getItem("email");
+  //     const password = localStorage.getItem("password");
+  //     if (email) setValue("email", email);
+  //     if (password) setValue("password", password);
+  //   }
+  // }, [setValue]);
   const toggleVisibility = () => setIsVisible(!isVisible);
 
   const onSubmit = async (data: LoginFormInputs) => {
     try {
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+        localStorage.setItem("email", data.email);
+        localStorage.setItem("password", data.password);
+      } else {
+        localStorage.removeItem("rememberMe");
+        localStorage.removeItem("email");
+        localStorage.removeItem("password");
+      }
       const response = await axios.post(
         import.meta.env.VITE_API_URL + "/auth/login",
         data,
         { withCredentials: true }
       );
       if (response.status === 200) {
-        login(response.data.token);
+        login(response.data.data);
         // Redirect to dashboard or any other page
         navigate("/dashboard", {
           replace: true,
@@ -125,7 +151,14 @@ export default function LoginPage() {
             errorMessage={errors.password?.message}
           />
           <div className="flex w-full items-center justify-between px-1 py-2">
-            <Checkbox name="remember" size="sm">
+            <Checkbox
+              onChange={(e) => {
+                setRememberMe(e.currentTarget.checked);
+              }}
+              isSelected={rememberMe}
+              name="remember"
+              size="sm"
+            >
               Remember me
             </Checkbox>
             <Link className="text-default-500" href="#" size="sm">

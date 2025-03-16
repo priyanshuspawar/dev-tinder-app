@@ -1,10 +1,12 @@
 import { getProfile } from "@/queries/profile";
+import { UserProfile } from "@/queries/types";
 import { create } from "zustand";
 
 interface AuthState {
   isAuthenticated: boolean;
   isAppLoading: boolean;
-  login: (token: string) => void;
+  user: UserProfile | null;
+  login: (userData: UserProfile) => void;
   logout: () => void;
   checkAuthStatus: () => void;
 }
@@ -12,9 +14,10 @@ interface AuthState {
 const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isAppLoading: true,
-  login: () => {
+  user: null,
+  login: (userData: UserProfile) => {
     // Assuming the token is set in cookies by the server
-    set({ isAuthenticated: true });
+    set({ isAuthenticated: true, user: userData });
   },
   logout: () => {
     // Assuming the token is removed from cookies by the server
@@ -24,7 +27,7 @@ const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await getProfile();
       if (res.data._id) {
-        set({ isAuthenticated: true });
+        set({ isAuthenticated: true, user: res.data });
       } else {
         set({ isAuthenticated: false });
       }

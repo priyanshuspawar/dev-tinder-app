@@ -1,0 +1,145 @@
+import { cn, getAge } from "@/utils/helpers";
+import { Divider } from "@heroui/react";
+import { Icon } from "@iconify/react";
+const EditEssentials = ({
+  setActiveDropDown,
+  setIsOpen,
+  dateOfBirth,
+  gender,
+  education,
+  isReadyOnly = false,
+  location,
+}: {
+  setActiveDropDown?: React.Dispatch<React.SetStateAction<string | null>>;
+  setIsOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+  dateOfBirth: string | undefined;
+  gender: "male" | "female" | "other" | undefined;
+  education: string | undefined;
+  location: string | undefined;
+  isReadyOnly?: boolean;
+}) => {
+  const handleOpenDropdown = (panelName: string) => {
+    if (!setActiveDropDown || !setIsOpen) return;
+    setActiveDropDown(panelName);
+    setIsOpen(true);
+  };
+
+  {
+    /* ESSENTIALS */
+  }
+  return (
+    <>
+      {isReadyOnly ? (
+        <div className="bg-secondary-50 w-full py-4 px-4 flex flex-col rounded-2xl overflow-hidden">
+          <span className="flex gap-2 items-center font-semibold leading-none text-gray-300 text-sm md:text-base mb-1">
+            <Icon icon={"material-symbols:account-box"} />
+            <span>Essentials</span>
+          </span>
+
+          <span className="flex flex-col my-2">
+            <div className="flex items-center gap-2 text-xs md:text-sm ">
+              <Icon icon={"icons8:gender"} className="" />
+              <span className="capitalize">{gender}</span>
+            </div>
+            <Divider className="my-1" />
+
+            <div className="flex items-center gap-2 text-xs md:text-sm ">
+              <Icon icon={"lsicon:education-outline"} className="" />
+              <span className="capitalize">{education}</span>
+            </div>
+            <Divider className="my-1" />
+            <div className="flex items-center gap-2 text-xs md:text-sm ">
+              <Icon icon={"tabler:location"} className="" />
+              <span className="capitalize">16 Killometers away</span>
+            </div>
+          </span>
+        </div>
+      ) : (
+        <div>
+          <h2 className="font-semibold my-2">ESSENTIALS</h2>
+          {/* Date of Birth */}
+          <div
+            className="bg-secondary-50 cursor-pointer rounded-t-lg py-2 px-2 flex justify-between items-center group"
+            onClick={() => {
+              handleOpenDropdown("dateOfBirth");
+            }}
+          >
+            <span className="text-foreground-100 group-hover:text-primary-500 text-sm font-semibold transition-colors">
+              Date of Birth
+            </span>
+            <span
+              className={cn(
+                { underline: !dateOfBirth },
+                "text-foreground-300 text-sm group-hover:text-secondary-500"
+              )}
+            >
+              {getAge(dateOfBirth) || "Enter"}
+            </span>
+          </div>
+          <Divider />
+          {/* Gender */}
+          <div
+            onClick={() => {
+              handleOpenDropdown("gender");
+            }}
+            className="bg-secondary-50 cursor-pointer py-2 px-2 flex justify-between items-center group"
+          >
+            <span className="text-foreground-100 group-hover:text-primary-500 text-sm font-semibold transition-colors">
+              Gender
+            </span>
+            <span
+              className={cn(
+                { underline: !gender },
+                "text-foreground-300 text-sm group-hover:text-secondary-500 capitalize"
+              )}
+            >
+              {gender || "Enter"}
+            </span>
+          </div>
+          <Divider />
+          {/* Education */}
+          <div
+            onClick={() => {
+              handleOpenDropdown("education");
+            }}
+            className="bg-secondary-50 cursor-pointer py-2 px-2 flex justify-between items-center group"
+          >
+            <span className="text-foreground-100 group-hover:text-primary-500 text-sm font-semibold transition-colors">
+              Education
+            </span>
+            <span
+              className={cn(
+                { underline: !education },
+                "text-foreground-300 text-sm group-hover:text-secondary-500"
+              )}
+            >
+              {education || "Enter"}
+            </span>
+          </div>
+          <Divider />
+          {/* Location */}
+          <div
+            onClick={() => {
+              handleOpenDropdown("location");
+            }}
+            className="bg-secondary-50 cursor-pointer rounded-b-lg py-2 px-2 flex justify-between items-center group"
+          >
+            <span className="text-foreground-100 group-hover:text-primary-500 text-sm font-semibold transition-colors">
+              Location
+            </span>
+            <span
+              className={cn(
+                { underline: location },
+                "text-foreground-300 text-sm group-hover:text-secondary-500"
+              )}
+            >
+              {location || "Enter"}
+            </span>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+export default EditEssentials;

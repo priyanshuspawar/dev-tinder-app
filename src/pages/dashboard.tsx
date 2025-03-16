@@ -1,20 +1,29 @@
-import axios from "axios";
+import { useState } from "react";
+import { feedUser } from "@/queries/types";
+import { newData } from "@/utils/constants";
+import FeedCard from "@/components/feed-card";
 
 const dashboard = () => {
-  const logoutService = async () => {
-    try {
-      await axios.post(
-        import.meta.env.VITE_API_URL + "/auth/logout",
-        {},
-        { withCredentials: true }
-      );
-      // Redirect to login page
-      window.location.replace("/");
-    } catch (error) {
-      console.error("Error logging out");
-    }
-  };
-  return <div onClick={logoutService}>dashboard</div>;
+  const [cards, setCards] = useState<feedUser[]>(newData);
+  const [profileActiveSlide, setProfileActiveSlide] = useState(0);
+  return (
+    <>
+      {cards.length == 0 && (
+        <span className="absolute z-0 top-1/2 w-full text-center italic font-semibold">
+          No more users available
+        </span>
+      )}
+      {cards.map((card) => (
+        <FeedCard
+          activeSlide={profileActiveSlide}
+          setActiveSlide={setProfileActiveSlide}
+          key={card._id}
+          {...card}
+          setCards={setCards}
+        />
+      ))}
+    </>
+  );
 };
 
 export default dashboard;

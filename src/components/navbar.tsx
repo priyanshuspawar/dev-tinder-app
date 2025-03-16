@@ -20,16 +20,7 @@ import { cn } from "@heroui/react";
 
 import { AcmeIcon } from "./acme";
 
-const menuItems = [
-  "About",
-  "Blog",
-  "Customers",
-  "Pricing",
-  "Enterprise",
-  "Changelog",
-  "Documentation",
-  "Contact Us",
-];
+const menuItems = ["About", "Privacy Policy", "Safety", "Support"];
 
 export default function NavbarMain(props: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -58,29 +49,24 @@ export default function NavbarMain(props: NavbarProps) {
 
       {/* Center Content */}
       <NavbarContent justify="center">
-        <NavbarItem>
+        <NavbarItem isActive>
           <Link className="text-default-500" href="#" size="sm">
             Home
           </Link>
         </NavbarItem>
         <NavbarItem>
           <Link className="text-default-500" href="#" size="sm">
-            Features
-          </Link>
-        </NavbarItem>
-        <NavbarItem isActive>
-          <Link aria-current="page" color="foreground" href="#" size="sm">
-            Customers
+            Privacy Policy
           </Link>
         </NavbarItem>
         <NavbarItem>
           <Link className="text-default-500" href="#" size="sm">
-            About Us
+            About
           </Link>
         </NavbarItem>
         <NavbarItem>
           <Link className="text-default-500" href="#" size="sm">
-            Integrations
+            Safety
           </Link>
         </NavbarItem>
       </NavbarContent>

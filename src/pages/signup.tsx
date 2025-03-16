@@ -10,7 +10,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import { AcmeIcon } from "@/components/acme";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 
 const signupSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -59,15 +58,16 @@ export default function Signup() {
         { withCredentials: true }
       );
       if (response.status === 200) {
-        await toast.promise(
-          new Promise((res) => {
-            setTimeout(() => res(true), 2000);
-          }),
-          {
-            loading: "Account created successfully",
-            success: "Redirecting to login page",
-          }
-        );
+        //WIP: add toast
+        // await toast.promise(
+        //   new Promise((res) => {
+        //     setTimeout(() => res(true), 2000);
+        //   }),
+        //   {
+        //     loading: "Account created successfully",
+        //     success: "Redirecting to login page",
+        //   }
+        // );
         // Redirect to login page or any other page
         navigate("/login", {
           replace: true,
