@@ -28,37 +28,43 @@ const EditSkills = ({
 }) => {
   if (isReadOnly && skills) {
     return (
-      <div className="bg-secondary-50 w-full py-2 px-4 flex flex-col rounded-2xl overflow-hidden">
-        <span className="flex items-center gap-1 font-medium text-sm mb-1">
-          <Icon
-            icon={"material-symbols-light:interests"}
-            className="w-5 h-5 text-white"
-          />
-          <span>Interests</span>
-        </span>
-        <div aria-label="skills" className="flex flex-wrap gap-2">
-          {skills.map((e) => {
-            const isMatch = userSkills ? userSkills.includes(e.label) : false;
-            return (
-              <Chip
-                variant="bordered"
-                size="sm"
-                classNames={{
-                  content: "font-medium",
-                }}
-                className={cn(
-                  isMatch
-                    ? "bg-gradient-to-r from-primary to-primary-200 border-none"
-                    : ""
-                )}
-                key={e._id}
-              >
-                {e.label}
-              </Chip>
-            );
-          })}
-        </div>
-      </div>
+      <>
+        {skills.length > 0 && (
+          <div className="bg-secondary-50 w-full py-2 px-4 flex flex-col rounded-2xl overflow-hidden">
+            <span className="flex items-center gap-1 font-medium text-sm mb-1">
+              <Icon
+                icon={"material-symbols-light:interests"}
+                className="w-5 h-5 text-white"
+              />
+              <span>Interests</span>
+            </span>
+            <div aria-label="skills" className="flex flex-wrap gap-2">
+              {skills.map((e) => {
+                const isMatch = userSkills
+                  ? userSkills.includes(e.label)
+                  : false;
+                return (
+                  <Chip
+                    variant="bordered"
+                    size="sm"
+                    classNames={{
+                      content: "font-medium",
+                    }}
+                    className={cn(
+                      isMatch
+                        ? "bg-gradient-to-r from-primary to-primary-200 border-none"
+                        : ""
+                    )}
+                    key={e._id}
+                  >
+                    {e.label}
+                  </Chip>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -126,7 +132,7 @@ const EditSkillsDropdown = ({
         onPress={() => {
           if (localSkill.trim().length < 2) return;
           append({
-            id: nanoid(6),
+            _id: nanoid(6),
             label: localSkill,
           });
           setLocalSkill("");

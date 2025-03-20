@@ -1,18 +1,18 @@
-import { feedUser } from "@/queries/types";
+import { feedUser, UserProfile } from "@/queries/types";
 import { Chip } from "@heroui/react";
 import { motion, useMotionValue, useTransform } from "motion/react";
 import { Dispatch } from "react";
 import { Icon } from "@iconify/react";
 import { cn, getAge } from "@/utils/helpers";
 import useSideBarStore from "@/store/sidebarStore";
-import useAuthStore from "@/store/authStore";
 import EditGoal from "./profile-edit/edit-goal";
 import EditEssentials from "./profile-edit/edit-essentials";
 import EditAbout from "./profile-edit/edit-about";
 import { EditSkills } from "./profile-edit/edit-skills";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { sendRequest } from "@/queries/profile";
 
 type Props = feedUser & {
-  setCards: Dispatch<React.SetStateAction<feedUser[]>>;
   activeSlide: number;
   setActiveSlide: Dispatch<React.SetStateAction<number>>;
 };
@@ -20,7 +20,6 @@ type Props = feedUser & {
 const FeedCard = ({
   _id: cardId,
   pictures,
-  setCards,
   essentials,
   firstName,
   skills,
@@ -31,6 +30,25 @@ const FeedCard = ({
   activeSlide,
   setActiveSlide,
 }: Props) => {
+  const queryClient = useQueryClient();
+  const { mutateAsync } = useMutation({
+    mutationFn: sendRequest,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["feed"] });
+      const previousFeed = queryClient.getQueryData(["todos"]);
+      queryClient.setQueryData(["feed"], (old: feedUser[]) => [
+        ...old.slice(1),
+      ]);
+      return { previousFeed };
+    },
+    onError: (context: { previousFeed: feedUser[] }) => {
+      queryClient.setQueryData(["feed"], context.previousFeed);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["feed"] });
+    },
+  });
+
   const x = useMotionValue(0);
   const offsetBoundary = 150;
 
@@ -49,23 +67,36 @@ const FeedCard = ({
     [-offsetBoundary, 0, offsetBoundary],
     [0.8, 1, 1.5]
   );
-  const { user } = useAuthStore();
+  const user = queryClient.getQueryData(["user"]) as UserProfile;
   const userSkills = user?.skills.map((e) => e.label);
   // Handle swipe removal
-  const handleDragEnd = () => {
+  const handleDragEnd = (userId: string) => {
     if (x.get() > 100) {
-      setCards((prev) => prev.slice(1));
+      // interested
+      mutateAsync({
+        status: "interested",
+        userId,
+      });
     }
     if (x.get() < -100) {
-      setCards((prev) => prev.slice(1));
+      mutateAsync({
+        status: "ignore",
+        userId,
+      });
     }
   };
   // handle button removal
-  const handleBtnClick = (direction: "left" | "right") => {
+  const handleBtnClick = (direction: "left" | "right", userId: string) => {
     if (direction === "left") {
-      setCards((prev) => prev.slice(1));
+      mutateAsync({
+        status: "ignore",
+        userId,
+      });
     } else if (direction === "right") {
-      setCards((prev) => prev.slice(1));
+      mutateAsync({
+        status: "interested",
+        userId,
+      });
     }
   };
   const handleTabClick = () => {
@@ -82,7 +113,7 @@ const FeedCard = ({
       <motion.div
         drag={isFullModeActive ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
-        onDragEnd={handleDragEnd}
+        onDragEnd={() => handleDragEnd(cardId)}
         style={{ x, opacity, rotate }}
         className="w-full h-full"
       >
@@ -210,15 +241,6 @@ const FeedCard = ({
             skills={skills}
             userSkills={userSkills}
           />
-          {/* {activeSlide == 0 && (
-            <span className="flex items-center gap-1 my-1 font-medium text-lg">
-              <Icon
-                icon={"akar-icons:location"}
-                className="w-4 h-4 text-white"
-              />
-              <span className="font-medium text-sm">16 km away</span>
-            </span>
-          )} */}
         </div>
       </motion.div>
       {/* Action Buttons */}
@@ -237,13 +259,13 @@ const FeedCard = ({
             color="text-warning-400"
           />
           <ActionBtn
-            onClick={() => handleBtnClick("left")}
+            onClick={() => handleBtnClick("left", cardId)}
             icon="maki:cross"
             color="text-danger-400"
             scale={leftScale}
           />
           <ActionBtn
-            onClick={() => handleBtnClick("right")}
+            onClick={() => handleBtnClick("right", cardId)}
             icon="solar:heart-bold"
             color="text-success-400"
             scale={rightScale}
@@ -289,17 +311,33 @@ type SlideDescriptionProps = {
   location: string | undefined;
   education: string | undefined;
   activeSlide: number;
+  selfProfileView?: boolean;
   userSkills: string[] | undefined;
 };
 export const SlideDescription = ({
   skills,
+  selfProfileView = false,
   about,
   lookingFor,
   location,
   activeSlide,
   userSkills,
 }: SlideDescriptionProps) => {
-  const getProp = () => {
+  const getPropForPreview = () => {
+    if (activeSlide === 0)
+      return about
+        ? { key: "about", value: about }
+        : skills.length
+          ? { key: "skills", value: skills }
+          : { key: "lookingFor", value: lookingFor };
+    if (activeSlide === 1)
+      return skills.length
+        ? { key: "skills", value: skills }
+        : { key: "lookingFor", value: lookingFor };
+    if (activeSlide === 2) return { key: "lookingFor", value: lookingFor };
+    return null;
+  };
+  const getPropForFeed = () => {
     if (activeSlide === 0) return { key: "location", value: location };
     if (activeSlide === 1)
       return about
@@ -315,7 +353,7 @@ export const SlideDescription = ({
     return null;
   };
 
-  const element = getProp();
+  const element = selfProfileView ? getPropForPreview() : getPropForFeed();
   return (
     <>
       {element?.key == "location" && (
@@ -349,6 +387,7 @@ export const SlideDescription = ({
                   size="sm"
                   classNames={{
                     content: "font-medium",
+                    base: "bg-black/15",
                   }}
                   className={cn(
                     isMatch
@@ -365,9 +404,13 @@ export const SlideDescription = ({
         </div>
       )}
       {element?.key == "lookingFor" && (
-        <div className="flex">
-          <span>Looking for</span>
-          <span>{lookingFor}</span>
+        <div className="flex flex-col my-0.5">
+          <span className="inline-flex items-center gap-1.5 font-semibold">
+            {" "}
+            <Icon icon={"iconamoon:search"} />
+            Looking for
+          </span>
+          <span className="font-semibold">✨ {lookingFor}</span>
         </div>
       )}
     </>

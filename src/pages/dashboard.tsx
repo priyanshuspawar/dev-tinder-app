@@ -1,27 +1,35 @@
 import { useState } from "react";
-import { feedUser } from "@/queries/types";
-import { newData } from "@/utils/constants";
 import FeedCard from "@/components/feed-card";
+import { useQuery } from "@tanstack/react-query";
+import { getFeed } from "@/queries/profile";
+import { Spacer } from "@heroui/react";
 
 const dashboard = () => {
-  const [cards, setCards] = useState<feedUser[]>(newData);
+  const [page, setPage] = useState(1);
+  const { data: feed, isLoading } = useQuery({
+    queryKey: ["feed"],
+    queryFn: () => getFeed(page),
+  });
   const [profileActiveSlide, setProfileActiveSlide] = useState(0);
+  if (isLoading) {
+    <Spacer />;
+  }
   return (
     <>
-      {cards.length == 0 && (
+      {!feed || feed.length == 0 ? (
         <span className="absolute z-0 top-1/2 w-full text-center italic font-semibold">
           No more users available
         </span>
+      ) : (
+        feed.map((card) => (
+          <FeedCard
+            activeSlide={profileActiveSlide}
+            setActiveSlide={setProfileActiveSlide}
+            key={card._id}
+            {...card}
+          />
+        ))
       )}
-      {cards.map((card) => (
-        <FeedCard
-          activeSlide={profileActiveSlide}
-          setActiveSlide={setProfileActiveSlide}
-          key={card._id}
-          {...card}
-          setCards={setCards}
-        />
-      ))}
     </>
   );
 };

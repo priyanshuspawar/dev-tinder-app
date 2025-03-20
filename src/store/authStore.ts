@@ -6,6 +6,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isAppLoading: boolean;
   user: UserProfile | null;
+  changeAuthStatus: (status: boolean) => void;
   login: (userData: UserProfile) => void;
   logout: () => void;
   checkAuthStatus: () => void;
@@ -15,6 +16,11 @@ const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isAppLoading: true,
   user: null,
+  changeAuthStatus: (status: boolean) => {
+    set({
+      isAuthenticated: status,
+    });
+  },
   login: (userData: UserProfile) => {
     // Assuming the token is set in cookies by the server
     set({ isAuthenticated: true, user: userData });

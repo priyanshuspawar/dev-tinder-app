@@ -9,14 +9,16 @@ const EditEssentials = ({
   education,
   isReadyOnly = false,
   location,
+  selfView = false,
 }: {
   setActiveDropDown?: React.Dispatch<React.SetStateAction<string | null>>;
   setIsOpen?: React.Dispatch<React.SetStateAction<boolean>>;
-  dateOfBirth: string | undefined;
+  dateOfBirth: string | undefined | null;
   gender: "male" | "female" | "other" | undefined;
-  education: string | undefined;
-  location: string | undefined;
+  education: string | null | undefined;
+  location: string | null | undefined;
   isReadyOnly?: boolean;
+  selfView?: boolean;
 }) => {
   const handleOpenDropdown = (panelName: string) => {
     if (!setActiveDropDown || !setIsOpen) return;
@@ -30,30 +32,44 @@ const EditEssentials = ({
   return (
     <>
       {isReadyOnly ? (
-        <div className="bg-secondary-50 w-full py-4 px-4 flex flex-col rounded-2xl overflow-hidden">
-          <span className="flex gap-2 items-center font-semibold leading-none text-gray-300 text-sm md:text-base mb-1">
-            <Icon icon={"material-symbols:account-box"} />
-            <span>Essentials</span>
-          </span>
+        <>
+          {(education || gender) && (
+            <div className="bg-secondary-50 w-full py-4 px-4 flex flex-col rounded-2xl overflow-hidden">
+              <span className="flex gap-2 items-center font-semibold leading-none text-gray-300 text-sm md:text-base mb-1">
+                <Icon icon={"material-symbols:account-box"} />
+                <span>Essentials</span>
+              </span>
 
-          <span className="flex flex-col my-2">
-            <div className="flex items-center gap-2 text-xs md:text-sm ">
-              <Icon icon={"icons8:gender"} className="" />
-              <span className="capitalize">{gender}</span>
-            </div>
-            <Divider className="my-1" />
+              <span className="flex flex-col my-2">
+                {gender && (
+                  <div className="flex items-center gap-2 text-xs md:text-sm ">
+                    <Icon icon={"icons8:gender"} className="" />
+                    <span className="capitalize">{gender}</span>
+                  </div>
+                )}
+                {education && (
+                  <>
+                    <Divider className="my-1" />
 
-            <div className="flex items-center gap-2 text-xs md:text-sm ">
-              <Icon icon={"lsicon:education-outline"} className="" />
-              <span className="capitalize">{education}</span>
+                    <div className="flex items-center gap-2 text-xs md:text-sm ">
+                      <Icon icon={"lsicon:education-outline"} className="" />
+                      <span className="capitalize">{education}</span>
+                    </div>
+                  </>
+                )}
+                {!selfView && (
+                  <>
+                    <Divider className="my-1" />
+                    <div className="flex items-center gap-2 text-xs md:text-sm ">
+                      <Icon icon={"tabler:location"} className="" />
+                      <span className="capitalize">16 Killometers away</span>
+                    </div>
+                  </>
+                )}
+              </span>
             </div>
-            <Divider className="my-1" />
-            <div className="flex items-center gap-2 text-xs md:text-sm ">
-              <Icon icon={"tabler:location"} className="" />
-              <span className="capitalize">16 Killometers away</span>
-            </div>
-          </span>
-        </div>
+          )}
+        </>
       ) : (
         <div>
           <h2 className="font-semibold my-2">ESSENTIALS</h2>

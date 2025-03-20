@@ -8,19 +8,18 @@ import DashboardLayout from "./pages/layouts/dashboardLayout";
 import NotFound from "./pages/not-fount";
 import Login from "./pages/login";
 import PublicRoute from "./components/public-route";
-import { Suspense, useEffect } from "react";
-import useAuthStore from "./store/authStore";
+import { Suspense } from "react";
 import ProfileView from "./pages/profile-view";
 import ProfileEdit from "./pages/profile-edit";
 import DocsPage from "./pages/about";
 import { Spinner } from "@heroui/react";
-
+import { useQuery } from "@tanstack/react-query";
+import ChatPage from "./pages/chatPage";
+import RequestReview from "./pages/request-review";
+import { userQueryOptions } from "./queries/profile";
 const App = () => {
-  const checkAuthStatus = useAuthStore((state) => state.checkAuthStatus);
-  const isLoading = useAuthStore((state) => state.isAppLoading);
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+  // Queries
+  const { isLoading } = useQuery(userQueryOptions);
   if (isLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center">
@@ -48,6 +47,8 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="connections" element={<ChatPage />} />
+            <Route path="connections/review" element={<RequestReview />} />
             <Route path="profile" element={<ProfileView />} />
             <Route path="profile/edit" element={<ProfileEdit />} />
           </Route>

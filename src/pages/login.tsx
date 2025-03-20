@@ -6,8 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import { AcmeIcon } from "@/components/acme";
-import useAuthStore from "@/store/authStore";
-import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -30,8 +29,6 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = React.useState<boolean>(
     localStorage?.getItem("rememberMe") === "true"
   );
-  const { login } = useAuthStore();
-  const navigate = useNavigate();
 
   const {
     register,
@@ -45,19 +42,26 @@ export default function LoginPage() {
       password: (localStorage.getItem("password") as string) || "",
     },
   });
-  // useEffect(() => {
-  //   const remember = localStorage.getItem("rememberMe") === "true";
-  //   console.log("@@check", remember);
-  //   if (remember) {
-  //     setRememberMe(true);
-  //     const email = localStorage.getItem("email");
-  //     const password = localStorage.getItem("password");
-  //     if (email) setValue("email", email);
-  //     if (password) setValue("password", password);
-  //   }
-  // }, [setValue]);
   const toggleVisibility = () => setIsVisible(!isVisible);
-
+  const queryClient = useQueryClient();
+  const { mutateAsync } = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await axios.post(
+        import.meta.env.VITE_API_URL + "/auth/login",
+        data,
+        { withCredentials: true }
+      );
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["user"],
+      });
+      // navigation("/dashboard", {
+      //   replace: true,
+      // });
+    },
+  });
   const onSubmit = async (data: LoginFormInputs) => {
     try {
       if (rememberMe) {
@@ -69,18 +73,7 @@ export default function LoginPage() {
         localStorage.removeItem("email");
         localStorage.removeItem("password");
       }
-      const response = await axios.post(
-        import.meta.env.VITE_API_URL + "/auth/login",
-        data,
-        { withCredentials: true }
-      );
-      if (response.status === 200) {
-        login(response.data.data);
-        // Redirect to dashboard or any other page
-        navigate("/dashboard", {
-          replace: true,
-        });
-      }
+      await mutateAsync(data);
     } catch (error) {
       console.error("Login failed", error);
       if (error instanceof AxiosError) {
@@ -89,8 +82,6 @@ export default function LoginPage() {
             error.response?.data.message ?? "Failed to login please try again",
         });
       }
-
-      // Handle error (e.g., show error message to the user)
     }
   };
   return (

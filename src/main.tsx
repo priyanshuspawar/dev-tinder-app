@@ -13,11 +13,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <BrowserRouter>
         <Provider>
           <main className="">
-            {/* <Toaster
-              toastOptions={{
-                className: "bg-background text-foreground",
-              }}
-            /> */}
             <App />
           </main>
         </Provider>

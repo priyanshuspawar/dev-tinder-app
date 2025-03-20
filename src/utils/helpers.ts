@@ -56,3 +56,28 @@ export const isValidDate = (value: string): boolean => {
 
   return age >= 18 && age <= 99; // Age check
 };
+
+export const getProfilePhoto = (arr: { _id: string; imgUrl: string }[]) => {
+  if (!arr || arr.length === 0) {
+    return "https://www.svgrepo.com/show/170633/profile-user.svg";
+  }
+  return (
+    arr[0]?.imgUrl ?? "https://www.svgrepo.com/show/170633/profile-user.svg"
+  );
+};
+
+export const getSlideImage = ({
+  pictures,
+  activeSlide,
+}: {
+  pictures: { _id: string; imgUrl: string }[] | undefined;
+  activeSlide: number;
+}) => {
+  if (!pictures) {
+    return "";
+  }
+  if (activeSlide < pictures.length) {
+    return pictures[activeSlide].imgUrl;
+  }
+  return "";
+};

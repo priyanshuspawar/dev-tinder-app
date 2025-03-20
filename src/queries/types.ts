@@ -54,6 +54,12 @@ type feedUser = {
     | "Gonna go with flow";
   essentials: Essentials; // Essentials object containing education and location
 };
+
+type ConnectionRequests = {
+  _id: string;
+  fromUserId: feedUser;
+}[];
+
 type ProfileApiResponse = {
   data: UserProfile;
 };
@@ -69,4 +75,5 @@ export type {
   imageUploadApiResponse,
   UpdateProfile,
   feedUser,
+  ConnectionRequests,
 };

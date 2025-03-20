@@ -1,15 +1,20 @@
 import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import MainCard from "@/components/main-card";
-import useAuthStore from "@/store/authStore";
-import { cn, getAge, getMinMaxDate, isValidDate } from "@/utils/helpers";
+import {
+  cn,
+  getAge,
+  getMinMaxDate,
+  getSlideImage,
+  isValidDate,
+} from "@/utils/helpers";
 import { parseDate } from "@internationalized/date";
 import * as z from "zod";
 import { DatePicker, Button, Input, Spinner, addToast } from "@heroui/react";
 import { updateSchema } from "@/utils/validation-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { imageUploadApiResponse } from "@/queries/types";
+import { imageUploadApiResponse, UserProfile } from "@/queries/types";
 import CardHeader from "@/components/profile-edit/CardHeader";
 import ProfilePhotoUpload from "@/components/profile-edit/profile-photo-upload";
 import EditAbout from "@/components/profile-edit/edit-about";
@@ -22,12 +27,14 @@ import EditEssentials from "@/components/profile-edit/edit-essentials";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { SlideDescription } from "@/components/feed-card";
 import { Icon } from "@iconify/react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 const MAX_IMAGES = 6;
 
 type updateProfile = z.infer<typeof updateSchema>;
 
 const ProfileEdit = () => {
-  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+  const user = queryClient.getQueryData(["user"]) as UserProfile;
   const { max, min } = getMinMaxDate();
   // Initialize React Hook Form with default values from the user
   const {
@@ -52,7 +59,6 @@ const ProfileEdit = () => {
       skills: user?.skills ?? [],
     },
   });
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: "skills", // Name of the field array
@@ -60,6 +66,26 @@ const ProfileEdit = () => {
   const [isFormLoading, setIsFormLoading] = useState(false);
   const navigation = useNavigate();
   // Submit handler – converts dateOfBirth and sends the payload to your API.
+  const { mutateAsync: mutateProfile } = useMutation({
+    mutationFn: async (payload: any) => {
+      await axios.patch(import.meta.env.VITE_API_URL + "/profile", payload, {
+        withCredentials: true,
+      });
+    },
+    onSuccess: () => {
+      addToast({
+        title: "Profile updated successfully",
+        description: "Your profile has been updated",
+        color: "success",
+      });
+      if (context.isBottomNavActive) {
+        navigation("/dashboard/profile");
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+  });
   const onSubmit = async (data: updateProfile) => {
     try {
       if (!isDirty) {
@@ -98,22 +124,18 @@ const ProfileEdit = () => {
             return { imgUrl: picture.imgUrl };
           }) ?? []
       ).concat(uploadedImagesRes?.data ?? []);
+      const skills = data.skills.map((sk) => ({ label: sk.label }));
       const payload = {
         ...data,
         pictures,
+        skills,
+        essentials: {
+          location: data.location,
+          education: data.education,
+        },
       };
 
-      await axios.patch(import.meta.env.VITE_API_URL + "/profile", payload, {
-        withCredentials: true,
-      });
-      addToast({
-        title: "Profile updated successfully",
-        description: "Your profile has been updated",
-        color: "success",
-      });
-      if (context.isBottomNavActive) {
-        navigation("/dashboard/profile");
-      }
+      await mutateProfile(payload);
       reset();
     } catch (error) {
       addToast({
@@ -130,12 +152,20 @@ const ProfileEdit = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropDown, setActiveDropDown] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<string>("edit");
+  const [previewData, setPreviewData] = useState(user);
+  const toggleTab = (tab: string) => {
+    const formData = control._formValues;
+    if (["edit", "preview"].includes(tab)) {
+      setPreviewData((prev) => ({ ...prev, ...formData }));
+      setCurrentTab(tab);
+    }
+  };
   const context = useOutletContext<{
     isBottomNavActive: boolean;
   }>();
 
   //handlers for preview tab
-  const pictures = user?.pictures ?? [];
+  const pictures = previewData.pictures ?? [];
   const [activeSlide, setActiveSlide] = useState(0);
   const handleTabClick = () => {
     setActiveSlide((activeSlide + 1) % pictures.length);
@@ -154,17 +184,18 @@ const ProfileEdit = () => {
     relative overflow-hidden"
     >
       {!isFullModePreview && context.isBottomNavActive && (
-        <div
-          onClick={handleSubmit(onSubmit)}
-          className="flex justify-center items-center relative bg-secondary-100 border-b border-secondary/30 p-2 text-center"
-        >
+        <div className="flex justify-center items-center relative bg-secondary-100 border-b border-secondary/30 p-2 text-center">
           <span className="text-xl font-semibold">Edit Info</span>
-          <span className="absolute right-5 font-semibold text-sm cursor-pointer text-primary-600">
+          <button
+            onClick={handleSubmit(onSubmit)}
+            className="absolute right-5 font-semibold text-sm cursor-pointer text-primary-600 hover:text-primary-300"
+          >
             Done
-          </span>
+          </button>
         </div>
       )}
       <form
+        id="update-form"
         onSubmit={handleSubmit(onSubmit)}
         className="bg-background shadow-large lg:rounded-xl w-full h-full overflow-hidden"
       >
@@ -209,7 +240,7 @@ const ProfileEdit = () => {
                 <CardHeader
                   currentTab={currentTab}
                   handleTabChange={(e) => {
-                    setCurrentTab(e);
+                    toggleTab(e);
                   }}
                 />
               )
@@ -252,7 +283,7 @@ const ProfileEdit = () => {
                     "w-full transition-height transform duration-300 ease-in-out rounded-lg overflow-hidden"
                   )}
                   style={{
-                    backgroundImage: `url(${pictures[activeSlide].imgUrl})`,
+                    backgroundImage: `url(${getSlideImage({ activeSlide, pictures })})`,
                   }}
                 >
                   <div className="w-full py-[2px] px-[6px] bg-black absolute z-30 top-2 grid grid-rows-1 grid-flow-col auto-cols-auto gap-1.5">
@@ -281,10 +312,10 @@ const ProfileEdit = () => {
                         <div className="flex justify-between items-center w-full">
                           <div className="flex items-end gap-1">
                             <h2 className="font-semibold text-3xl tracking-normal">
-                              {user.firstName},
+                              {previewData.firstName},
                             </h2>
                             <span className="font-semibold text-xl">
-                              {getAge(user.dateOfBirth)}
+                              {getAge(previewData.dateOfBirth)}
                             </span>
                           </div>
 
@@ -303,13 +334,13 @@ const ProfileEdit = () => {
                         </div>
 
                         <SlideDescription
-                          about={user.about}
+                          about={previewData.about}
                           activeSlide={activeSlide}
-                          education={user.essentials.education}
-                          location={user.essentials.location}
-                          gender={user.gender}
-                          lookingFor={user.lookingFor}
-                          skills={user.skills}
+                          education={previewData.essentials.education}
+                          location={previewData.essentials.location}
+                          gender={previewData.gender}
+                          lookingFor={previewData.lookingFor}
+                          skills={previewData.skills}
                           userSkills={[]}
                         />
                       </div>
@@ -324,9 +355,9 @@ const ProfileEdit = () => {
                       isReadyOnly
                       {...{
                         dateOfBirth: user.dateOfBirth,
-                        education: user.essentials.education,
-                        gender: user.gender,
-                        location: user.essentials.location,
+                        education: getValues("education"),
+                        gender: getValues("gender"),
+                        location: getValues("location"),
                       }}
                     />
                     <EditAbout value={user.about} isReadOnly />
