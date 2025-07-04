@@ -37,3 +37,34 @@ h1{
     text-shadow: 0 0 20px var(--color--fuchsia-40, inherit)!important;
 }
 
+
+/* right bubble (user) */
+.bubble-tail-right::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    rotate: 20deg;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-left: 6px solid hsl(var(--heroui-primary) / var(--heroui-primary-opacity, var(--tw-bg-opacity)));;
+    /* or bg-primary */
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+}
+
+/* left bubble (others) */
+.bubble-tail-left::after {
+    content: '';
+    position: absolute;
+    left: -3px;
+    rotate: -20deg;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    border-right: 6px solid hsl(var(--heroui-default-100) / var(--heroui-default-100-opacity, var(--tw-bg-opacity)));
+    /* or bg-default-100 */
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+}
+

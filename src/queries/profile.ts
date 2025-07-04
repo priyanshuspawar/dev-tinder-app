@@ -19,14 +19,14 @@ const handleApiRequest = async <T>(apiCall: () => Promise<T>): Promise<T> => {
 
 export const getProfile = async (): Promise<ProfileApiResponse> => {
   return await handleApiRequest(async () => {
-    const response = await axios.get<{ data: ProfileApiResponse }>(
-      `${API_URL}/profile`,
-      {
-        withCredentials: true,
-      }
-    );
+    const response = await axios.get<ProfileApiResponse>(`${API_URL}/profile`, {
+      withCredentials: true,
+    });
     useAuthStore.getState().changeAuthStatus(true);
-    return response.data.data;
+    useAuthStore.getState().login({
+      ...response.data.data,
+    });
+    return response.data;
   });
 };
 
@@ -52,8 +52,12 @@ export const getRequestsReceived = async (): Promise<ConnectionRequests> => {
   return res.data.data;
 };
 
-export const getConnections = async (): Promise<feedUser[]> => {
-  const res = await axios.get<feedUser[]>(`${API_URL}/user/connections`, {
+type Connections = feedUser & {
+  connectionId: string;
+};
+
+export const getConnections = async (): Promise<Connections[]> => {
+  const res = await axios.get<Connections[]>(`${API_URL}/user/connections`, {
     withCredentials: true,
   });
   return res.data;
@@ -94,6 +98,17 @@ export const reviewRequest = async ({
   return response.data;
 };
 
+export const connectionProfileView = async (
+  otherUserId: string
+): Promise<feedUser> => {
+  const res = await axios.get<{ data: feedUser }>(
+    `${API_URL}/user/connection-profile/${otherUserId}`,
+    {
+      withCredentials: true,
+    }
+  );
+  return res.data.data;
+};
 export const userQueryOptions: UseQueryOptions = {
   queryKey: ["user"],
   queryFn: getProfile,

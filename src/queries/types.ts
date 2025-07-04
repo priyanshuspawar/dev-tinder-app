@@ -60,9 +60,7 @@ type ConnectionRequests = {
   fromUserId: feedUser;
 }[];
 
-type ProfileApiResponse = {
-  data: UserProfile;
-};
+type ProfileApiResponse = { data: UserProfile };
 
 type imageUploadApiResponse = {
   data: { imgUrl: string }[];

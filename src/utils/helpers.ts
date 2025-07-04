@@ -1,6 +1,15 @@
 import { clsx, ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import isToday from "dayjs/plugin/isToday";
+import isYesterday from "dayjs/plugin/isYesterday";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { Message } from "@/queries/chatQueries";
+dayjs.extend(utc);
+dayjs.extend(customParseFormat);
+dayjs.extend(isToday);
+dayjs.extend(isYesterday);
 export function cn(...classes: ClassValue[]) {
   return twMerge(clsx(classes));
 }
@@ -57,7 +66,7 @@ export const isValidDate = (value: string): boolean => {
   return age >= 18 && age <= 99; // Age check
 };
 
-export const getProfilePhoto = (arr: { _id: string; imgUrl: string }[]) => {
+export const getProfilePhoto = (arr?: { _id: string; imgUrl: string }[]) => {
   if (!arr || arr.length === 0) {
     return "https://www.svgrepo.com/show/170633/profile-user.svg";
   }
@@ -65,6 +74,9 @@ export const getProfilePhoto = (arr: { _id: string; imgUrl: string }[]) => {
     arr[0]?.imgUrl ?? "https://www.svgrepo.com/show/170633/profile-user.svg"
   );
 };
+
+export const userPlaceHolder =
+  "https://www.svgrepo.com/show/170633/profile-user.svg";
 
 export const getSlideImage = ({
   pictures,
@@ -81,3 +93,53 @@ export const getSlideImage = ({
   }
   return "";
 };
+
+export const msgTimeFormater = (isoString: string) => {
+  return dayjs.utc(isoString).local().format("hh:mm A");
+};
+
+export function getFormattedDate(dateStr: string) {
+  const d = dayjs(dateStr);
+  if (d.isToday()) return "Today";
+  if (d.isYesterday()) return "Yesterday";
+  return d.format("ddd, D MMM"); // e.g., "Fri, 14 Jun"
+}
+
+export function groupMessagesByDate(messages: Message[]) {
+  const groups: Record<string, typeof messages> = {};
+  console.log("@@@", messages);
+  messages.forEach((msg) => {
+    const key = getFormattedDate(msg.createdAt);
+    if (!groups[key]) groups[key] = [];
+    groups[key] = [msg, ...groups[key]];
+  });
+
+  return groups;
+}
+
+export function groupByRead(messages: Message[]) {
+  const group: Record<string, typeof messages> = {
+    read: [],
+    unseen: [],
+  };
+  messages.forEach((msg) => {
+    if (msg.status === "read") {
+      group["read"] = [msg, ...group["read"]];
+    } else {
+      group["unseen"] = [msg, ...group["unseen"]];
+    }
+  });
+  return group;
+}
+
+export function isLastMessageOfDate(
+  currDate: string,
+  currIndex: number,
+  messages: Message[]
+) {
+  let last = messages.length - 1;
+  return !dayjs(currDate).isSame(
+    last - currIndex < 0 ? null : messages[last - currIndex].createdAt,
+    "date"
+  );
+}

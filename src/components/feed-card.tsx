@@ -11,6 +11,8 @@ import EditAbout from "./profile-edit/edit-about";
 import { EditSkills } from "./profile-edit/edit-skills";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendRequest } from "@/queries/profile";
+import clsx from "clsx";
+import useAuthStore from "@/store/authStore";
 
 type Props = feedUser & {
   activeSlide: number;
@@ -30,6 +32,7 @@ const FeedCard = ({
   activeSlide,
   setActiveSlide,
 }: Props) => {
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const { mutateAsync } = useMutation({
     mutationFn: sendRequest,
@@ -67,7 +70,6 @@ const FeedCard = ({
     [-offsetBoundary, 0, offsetBoundary],
     [0.8, 1, 1.5]
   );
-  const user = queryClient.getQueryData(["user"]) as UserProfile;
   const userSkills = user?.skills.map((e) => e.label);
   // Handle swipe removal
   const handleDragEnd = (userId: string) => {
@@ -108,21 +110,30 @@ const FeedCard = ({
 
   const { toggleFullMode, isFullModeActive } = useSideBarStore();
   return (
-    <div key={cardId} className="w-full h-full relative">
+    <div
+      key={cardId}
+      className={clsx(
+        "w-[97%] md:w-[96%] lg:w-full h-[90%] relative my-4 rounded-lg flex flex-col items-center",
+        !isFullModeActive ? "bg-default-50" : ""
+      )}
+    >
       {/* Draggable Card */}
       <motion.div
         drag={isFullModeActive ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         onDragEnd={() => handleDragEnd(cardId)}
         style={{ x, opacity, rotate }}
-        className="w-full h-full"
+        className={clsx(
+          "w-[104%] h-[98%] relative shadow-default-200/75 rounded-lg overflow-hidden",
+          isFullModeActive ? "shadow" : "shadow-lg"
+        )}
       >
         <div
           className={cn(
-            "h-full w-full bg-background rounded-lg overflow-y-scroll scrollbar-hide relative",
-            {
-              "gradient-mask-b-40": !isFullModeActive,
-            }
+            "h-full w-full rounded-lg overflow-y-scroll scrollbar-hide relative"
+            // {
+            //   "gradient-mask-b-40": !isFullModeActive,
+            // }
           )}
         >
           <div
@@ -189,7 +200,7 @@ const FeedCard = ({
           {/* USER DETAILED INFO ONLY SHOW WHEN FULL MODE ENABLED */}
           {/* RELATIONSHIP GOALS */}
           {isFullModeActive && (
-            <div className="mt-2 mb-20 px-2 flex flex-col gap-2">
+            <div className="mt-2 mb-20 px-2 bg-background flex flex-col gap-2">
               <EditGoal value={lookingFor} isReadOnly />
               <EditEssentials
                 isReadyOnly
@@ -210,7 +221,7 @@ const FeedCard = ({
           className={cn(
             isFullModeActive &&
               "opacity-0 transition-opacity duration-250 ease-in-out",
-            "p-6 absolute bottom-20 w-full"
+            "px-4 absolute bottom-0 w-full bg-gradient-to-b from-black/0 via-black/30 to-black pt-8 pb-12"
           )}
         >
           <div className="flex justify-between items-center w-full">
@@ -247,9 +258,8 @@ const FeedCard = ({
       <div
         className={cn(
           "absolute bottom-0 z-50 w-full h-fit flex flex-col",
-          isFullModeActive
-            ? "pb-2 transition-all transform duration-200 ease-in-out bg-gradient-to-t from-black/80 via-black/40 to-black/0"
-            : "pb-8 bg-gradient-to-t from-black via-black/80 to-black/0"
+          isFullModeActive &&
+            "pb-4 transition-all transform duration-200 ease-in-out"
         )}
       >
         <div className="flex justify-center gap-6">
@@ -292,7 +302,7 @@ const ActionBtn = ({
 }) => (
   <motion.button onClick={onClick} whileTap={{ scale: 0.9 }}>
     <motion.div
-      className="flex items-center justify-center w-[50px] h-[50px] rounded-full bg-default shadow transition-all duration-100 ease-out hover:scale-110 hover:bg-default-300"
+      className="flex items-center justify-center w-[3.5rem] h-[3.5rem] rounded-full bg-default shadow transition-all duration-100 ease-out hover:scale-110 hover:bg-default-300"
       style={{ scale }}
     >
       <Icon icon={icon} className={`w-6 h-6 ${color}`} />

@@ -89,9 +89,8 @@ const ProfileEdit = () => {
   const onSubmit = async (data: updateProfile) => {
     try {
       if (!isDirty) {
-        if (context.isBottomNavActive) {
-          navigation("/dashboard/profile");
-        }
+        navigation("/dashboard/profile");
+
         return;
       }
       setIsFormLoading(true);
@@ -180,11 +179,11 @@ const ProfileEdit = () => {
   return (
     <div
       className="
-    w-full h-full
-    relative overflow-hidden"
+    w-full h-full lg:w-[24rem] lg:h-[90%] shadow-lg shadow-default-200/35 rounded-lg
+    relative overflow-hidden select-none"
     >
       {!isFullModePreview && context.isBottomNavActive && (
-        <div className="flex justify-center items-center relative bg-secondary-100 border-b border-secondary/30 p-2 text-center">
+        <div className="flex justify-center items-center relative bg-secondary-100 p-2 text-center ">
           <span className="text-xl font-semibold">Edit Info</span>
           <button
             onClick={handleSubmit(onSubmit)}
@@ -272,13 +271,13 @@ const ProfileEdit = () => {
                 />
               </div>
             ) : (
-              <div className="px-1 py-2 h-full">
+              <div className="py-2 h-full">
                 <div
                   onClick={() => {
                     handleTabClick();
                   }}
                   className={cn(
-                    isFullModePreview ? "h-4/6" : "h-[90%]",
+                    isFullModePreview ? "h-[70%]" : "h-full",
                     "flex items-end bg-cover bg-no-repeat bg-center bg-black/75",
                     "w-full transition-height transform duration-300 ease-in-out rounded-lg overflow-hidden"
                   )}
@@ -334,13 +333,13 @@ const ProfileEdit = () => {
                         </div>
 
                         <SlideDescription
-                          about={previewData.about}
+                          about={previewData?.about}
                           activeSlide={activeSlide}
-                          education={previewData.essentials.education}
-                          location={previewData.essentials.location}
-                          gender={previewData.gender}
-                          lookingFor={previewData.lookingFor}
-                          skills={previewData.skills}
+                          education={previewData.essentials?.education}
+                          location={previewData.essentials?.location}
+                          gender={previewData?.gender}
+                          lookingFor={previewData?.lookingFor}
+                          skills={previewData?.skills}
                           userSkills={[]}
                         />
                       </div>

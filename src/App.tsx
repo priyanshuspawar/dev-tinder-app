@@ -14,12 +14,16 @@ import ProfileEdit from "./pages/profile-edit";
 import DocsPage from "./pages/about";
 import { Spinner } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
-import ChatPage from "./pages/chatPage";
 import RequestReview from "./pages/request-review";
 import { userQueryOptions } from "./queries/profile";
+import ConnectionProfileView from "./pages/connection-profile-view";
+import { useMediaQuery } from "usehooks-ts";
+import Chat from "./pages/chat";
+import ConnectionsPage from "./pages/connectionsPage";
 const App = () => {
   // Queries
   const { isLoading } = useQuery(userQueryOptions);
+  const isBottomNavActive = useMediaQuery("(max-width: 895px)");
   if (isLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center">
@@ -47,8 +51,17 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="connections" element={<ChatPage />} />
-            <Route path="connections/review" element={<RequestReview />} />
+            <Route
+              path="connection/profile/:id"
+              element={<ConnectionProfileView />}
+            />
+            <Route path="chat/:connectionId" element={<Chat />} />
+            {isBottomNavActive && (
+              <Route path="connections" element={<ConnectionsPage />} />
+            )}
+            {isBottomNavActive && (
+              <Route path="connections/review" element={<RequestReview />} />
+            )}
             <Route path="profile" element={<ProfileView />} />
             <Route path="profile/edit" element={<ProfileEdit />} />
           </Route>
