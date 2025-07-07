@@ -6,6 +6,7 @@ type NotificationStore = {
   newChatMessages: Record<string, Message[]>;
   addNewChatMessages: (record: Record<string, Message[]>) => void;
   removeFromNotification: (connectionId: string, messageId: string) => void;
+  resetNotifications: () => void;
 };
 
 export const useNotificationStore = create<NotificationStore>()((set, get) => ({
@@ -37,6 +38,11 @@ export const useNotificationStore = create<NotificationStore>()((set, get) => ({
     }
     set({
       newChatMessages: update,
+    });
+  },
+  resetNotifications: () => {
+    set({
+      newChatMessages: {},
     });
   },
 }));

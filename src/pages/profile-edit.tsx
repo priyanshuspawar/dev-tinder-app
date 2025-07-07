@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import MainCard from "@/components/main-card";
 import {
@@ -14,7 +14,7 @@ import { DatePicker, Button, Input, Spinner, addToast } from "@heroui/react";
 import { updateSchema } from "@/utils/validation-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { imageUploadApiResponse, UserProfile } from "@/queries/types";
+import { imageUploadApiResponse } from "@/queries/types";
 import CardHeader from "@/components/profile-edit/CardHeader";
 import ProfilePhotoUpload from "@/components/profile-edit/profile-photo-upload";
 import EditAbout from "@/components/profile-edit/edit-about";
@@ -28,15 +28,24 @@ import { useNavigate, useOutletContext } from "react-router-dom";
 import { SlideDescription } from "@/components/feed-card";
 import { Icon } from "@iconify/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useAuthStore from "@/store/authStore";
+
 const MAX_IMAGES = 6;
 
-type updateProfile = z.infer<typeof updateSchema>;
+type UpdateProfile = z.infer<typeof updateSchema>;
+
+interface OutletContext {
+  isBottomNavActive: boolean;
+}
 
 const ProfileEdit = () => {
   const queryClient = useQueryClient();
-  const user = queryClient.getQueryData(["user"]) as UserProfile;
-  const { max, min } = getMinMaxDate();
-  // Initialize React Hook Form with default values from the user
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+  const { max, min } = useMemo(() => getMinMaxDate(), []);
+  const context = useOutletContext<OutletContext>();
+
+  // Form state
   const {
     register,
     handleSubmit,
@@ -46,26 +55,38 @@ const ProfileEdit = () => {
     clearErrors,
     reset,
     formState: { errors, isDirty },
-  } = useForm<updateProfile>({
+  } = useForm<UpdateProfile>({
     resolver: zodResolver(updateSchema),
-    defaultValues: {
-      about: user?.about || "",
-      dateOfBirth: user?.dateOfBirth?.split("T")[0],
-      gender: user?.gender,
-      location: user?.essentials?.location,
-      education: user?.essentials?.education,
-      lookingFor: user?.lookingFor,
-      pictures: user?.pictures ?? [],
-      skills: user?.skills ?? [],
-    },
+    defaultValues: useMemo(
+      () => ({
+        about: user?.about || "",
+        dateOfBirth: user?.dateOfBirth?.split("T")[0],
+        gender: user?.gender,
+        location: user?.essentials?.location,
+        education: user?.essentials?.education,
+        lookingFor: user?.lookingFor,
+        pictures: user?.pictures ?? [],
+        skills: user?.skills ?? [],
+      }),
+      [user]
+    ),
   });
+
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "skills", // Name of the field array
+    name: "skills",
   });
+
+  // Component state
   const [isFormLoading, setIsFormLoading] = useState(false);
-  const navigation = useNavigate();
-  // Submit handler – converts dateOfBirth and sends the payload to your API.
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeDropDown, setActiveDropDown] = useState<string | null>(null);
+  const [currentTab, setCurrentTab] = useState<string>("edit");
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [isFullModePreview, setIsFullModePreview] = useState(false);
+  const [previewData, setPreviewData] = useState(user);
+
+  // Mutation
   const { mutateAsync: mutateProfile } = useMutation({
     mutationFn: async (payload: any) => {
       await axios.patch(import.meta.env.VITE_API_URL + "/profile", payload, {
@@ -79,120 +100,142 @@ const ProfileEdit = () => {
         color: "success",
       });
       if (context.isBottomNavActive) {
-        navigation("/dashboard/profile");
+        navigate("/dashboard/profile");
       }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
     },
   });
-  const onSubmit = async (data: updateProfile) => {
-    try {
-      if (!isDirty) {
-        navigation("/dashboard/profile");
 
-        return;
-      }
-      setIsFormLoading(true);
-      let pictureData =
-        data.pictures?.filter((value) => typeof value.imgUrl !== "string") ??
-        [];
-      let uploadedImagesRes: imageUploadApiResponse | undefined;
-      if (pictureData?.length > 0) {
-        const picturesForUpload = new FormData();
+  // Handlers
+  const handleTabClick = useCallback(() => {
+    const pictures = previewData?.pictures ?? [];
+    setActiveSlide((prev) => (prev + 1) % pictures.length);
+  }, [previewData?.pictures]);
 
-        pictureData.forEach((value) => {
-          picturesForUpload.append("images", value.imgUrl); // Append each file
+  const toggleFullMode = useCallback(() => {
+    setIsFullModePreview((prev) => !prev);
+  }, []);
+
+  const toggleTab = useCallback(
+    (tab: string) => {
+      if (["edit", "preview"].includes(tab)) {
+        const formData = control._formValues;
+        setPreviewData((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            ...formData,
+            _id: prev._id,
+            firstName: prev.firstName,
+            lastName: prev.lastName,
+            email: prev.email,
+          };
         });
-
-        uploadedImagesRes = (
-          await axios.post<imageUploadApiResponse>(
-            import.meta.env.VITE_API_URL + "/profile/upload-picture",
-            picturesForUpload,
-            {
-              withCredentials: true,
-            }
-          )
-        ).data;
+        setCurrentTab(tab);
       }
+    },
+    [control]
+  );
 
-      const pictures = (
-        data.pictures
-          ?.filter((v) => typeof v.imgUrl == "string")
-          .map((picture) => {
-            return { imgUrl: picture.imgUrl };
-          }) ?? []
-      ).concat(uploadedImagesRes?.data ?? []);
-      const skills = data.skills.map((sk) => ({ label: sk.label }));
-      const payload = {
-        ...data,
-        pictures,
-        skills,
-        essentials: {
-          location: data.location,
-          education: data.education,
-        },
-      };
+  const closeDrawer = useCallback(() => {
+    setIsOpen(false);
+    setActiveDropDown(null);
+  }, []);
 
-      await mutateProfile(payload);
-      reset();
-    } catch (error) {
-      addToast({
-        title: "Error updating profile",
-        description: "An error occurred while updating your profile",
-        color: "danger",
-      });
-    } finally {
-      setIsFormLoading(false);
-    }
-  };
+  const onSubmit = useCallback(
+    async (data: UpdateProfile) => {
+      try {
+        if (!isDirty) {
+          navigate("/dashboard/profile");
+          return;
+        }
 
-  // Drawer state to control which field’s editor is open
-  const [isOpen, setIsOpen] = useState(false);
-  const [activeDropDown, setActiveDropDown] = useState<string | null>(null);
-  const [currentTab, setCurrentTab] = useState<string>("edit");
-  const [previewData, setPreviewData] = useState(user);
-  const toggleTab = (tab: string) => {
-    const formData = control._formValues;
-    if (["edit", "preview"].includes(tab)) {
-      setPreviewData((prev) => ({ ...prev, ...formData }));
-      setCurrentTab(tab);
-    }
-  };
-  const context = useOutletContext<{
-    isBottomNavActive: boolean;
-  }>();
+        setIsFormLoading(true);
 
-  //handlers for preview tab
-  const pictures = previewData.pictures ?? [];
-  const [activeSlide, setActiveSlide] = useState(0);
-  const handleTabClick = () => {
-    setActiveSlide((activeSlide + 1) % pictures.length);
-  };
-  const [isFullModePreview, setisFullModePreview] = useState(false);
-  const toggleFullMode = () => {
-    setisFullModePreview(!isFullModePreview);
-  };
+        const pictureData =
+          data.pictures?.filter((value) => typeof value.imgUrl !== "string") ??
+          [];
+
+        let uploadedImagesRes: imageUploadApiResponse | undefined;
+
+        if (pictureData.length > 0) {
+          const picturesForUpload = new FormData();
+          pictureData.forEach((value) => {
+            picturesForUpload.append("images", value.imgUrl);
+          });
+
+          uploadedImagesRes = (
+            await axios.post<imageUploadApiResponse>(
+              import.meta.env.VITE_API_URL + "/profile/upload-picture",
+              picturesForUpload,
+              { withCredentials: true }
+            )
+          ).data;
+        }
+
+        const pictures = (
+          data.pictures
+            ?.filter((v) => typeof v.imgUrl === "string")
+            .map((picture) => ({ imgUrl: picture.imgUrl })) ?? []
+        ).concat(uploadedImagesRes?.data ?? []);
+
+        const skills = data.skills.map((sk) => ({ label: sk.label }));
+        const payload = {
+          ...data,
+          pictures,
+          skills,
+          essentials: {
+            location: data.location,
+            education: data.education,
+          },
+        };
+
+        await mutateProfile(payload);
+        reset();
+      } catch (error) {
+        addToast({
+          title: "Error updating profile",
+          description: "An error occurred while updating your profile",
+          color: "danger",
+        });
+      } finally {
+        setIsFormLoading(false);
+      }
+    },
+    [isDirty, navigate, mutateProfile, reset]
+  );
+
+  // Memoized values
+  const pictures = useMemo(
+    () => previewData?.pictures ?? [],
+    [previewData?.pictures]
+  );
+
+  const slideImageUrl = useMemo(
+    () => getSlideImage({ activeSlide, pictures }),
+    [activeSlide, pictures]
+  );
+
   if (!user) {
-    return;
+    return null;
   }
   return (
-    <div
-      className="
-    w-full h-full lg:w-[24rem] lg:h-[90%] shadow-lg shadow-default-200/35 rounded-lg
-    relative overflow-hidden select-none"
-    >
+    <div className="w-full h-full lg:w-[24rem] lg:h-[90%] shadow-lg shadow-default-200/35 rounded-lg relative overflow-hidden select-none">
       {!isFullModePreview && context.isBottomNavActive && (
-        <div className="flex justify-center items-center relative bg-secondary-100 p-2 text-center ">
+        <div className="flex justify-center items-center relative bg-secondary-100 p-2 text-center">
           <span className="text-xl font-semibold">Edit Info</span>
           <button
             onClick={handleSubmit(onSubmit)}
             className="absolute right-5 font-semibold text-sm cursor-pointer text-primary-600 hover:text-primary-300"
+            aria-label="Save profile changes"
           >
             Done
           </button>
         </div>
       )}
+
       <form
         id="update-form"
         onSubmit={handleSubmit(onSubmit)}
@@ -228,39 +271,33 @@ const ProfileEdit = () => {
                       e.stopPropagation();
                       toggleFullMode();
                     }}
+                    aria-label="Exit full screen preview"
                   >
                     <Icon
                       className="text-xs rotate-180"
-                      icon={"icon-park-solid:up-two"}
+                      icon="icon-park-solid:up-two"
                     />
                   </button>
                 </div>
               ) : (
                 <CardHeader
                   currentTab={currentTab}
-                  handleTabChange={(e) => {
-                    toggleTab(e);
-                  }}
+                  handleTabChange={toggleTab}
                 />
               )
             }
           >
-            {currentTab == "edit" ? (
+            {currentTab === "edit" ? (
               <div className="px-2.5 py-0.5">
-                {/* PROFILE PHOTO */}
                 <ProfilePhotoUpload MAX_IMAGES={MAX_IMAGES} control={control} />
-                {/* ABOUT */}
                 <EditAbout register={register} />
-                {/* RELATION GOALS */}
                 <EditGoal control={control} />
-                {/* SKILLS */}
                 <EditSkills
                   fields={fields}
                   remove={remove}
                   setActiveDropDown={setActiveDropDown}
                   setIsOpen={setIsOpen}
                 />
-                {/* ESSENTIALS */}
                 <EditEssentials
                   dateOfBirth={getValues("dateOfBirth")}
                   education={getValues("education")}
@@ -273,25 +310,24 @@ const ProfileEdit = () => {
             ) : (
               <div className="py-2 h-full">
                 <div
-                  onClick={() => {
-                    handleTabClick();
-                  }}
+                  onClick={handleTabClick}
                   className={cn(
                     isFullModePreview ? "h-[70%]" : "h-full",
                     "flex items-end bg-cover bg-no-repeat bg-center bg-black/75",
-                    "w-full transition-height transform duration-300 ease-in-out rounded-lg overflow-hidden"
+                    "w-full transition-height transform duration-300 ease-in-out rounded-lg overflow-hidden cursor-pointer"
                   )}
-                  style={{
-                    backgroundImage: `url(${getSlideImage({ activeSlide, pictures })})`,
-                  }}
+                  style={{ backgroundImage: `url(${slideImageUrl})` }}
+                  role="button"
+                  aria-label="Click to change photo"
                 >
                   <div className="w-full py-[2px] px-[6px] bg-black absolute z-30 top-2 grid grid-rows-1 grid-flow-col auto-cols-auto gap-1.5">
                     {pictures.map((_, i) => {
-                      const isActive = i == activeSlide;
+                      const isActive = i === activeSlide;
                       return (
-                        <span
+                        <button
                           key={i}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setActiveSlide(i);
                           }}
                           className={cn(
@@ -300,46 +336,46 @@ const ProfileEdit = () => {
                               ? "bg-white"
                               : "bg-slate-400/80 hover:bg-slate-400/95"
                           )}
+                          aria-label={`View photo ${i + 1}`}
                         />
                       );
                     })}
                   </div>
+
                   {!isFullModePreview && (
-                    <div className="w-full bg-gradient-to-t from-black via-black/80 to-black/0 pt-2">
-                      {/* infos */}
-                      <div className={cn("p-6")}>
+                    <div className="w-full pb-32 bg-gradient-to-b from-black/10 via-black/70 to-black">
+                      <div className="p-6">
                         <div className="flex justify-between items-center w-full">
                           <div className="flex items-end gap-1">
                             <h2 className="font-semibold text-3xl tracking-normal">
-                              {previewData.firstName},
+                              {previewData?.firstName},
                             </h2>
                             <span className="font-semibold text-xl">
-                              {getAge(previewData.dateOfBirth)}
+                              {getAge(previewData?.dateOfBirth)}
                             </span>
                           </div>
-
-                          <div
+                          <button
                             className="bg-default p-2 rounded-full hover:scale-125 hover:bg-default-300 transition-all transform duration-200 ease-in-out cursor-pointer"
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleFullMode();
                             }}
+                            aria-label="Enter full screen preview"
                           >
                             <Icon
                               className="w-3.5 h-3.5"
-                              icon={"icon-park-solid:up-two"}
+                              icon="icon-park-solid:up-two"
                             />
-                          </div>
+                          </button>
                         </div>
-
                         <SlideDescription
                           about={previewData?.about}
                           activeSlide={activeSlide}
-                          education={previewData.essentials?.education}
-                          location={previewData.essentials?.location}
+                          education={previewData?.essentials?.education}
+                          location={previewData?.essentials?.location}
                           gender={previewData?.gender}
                           lookingFor={previewData?.lookingFor}
-                          skills={previewData?.skills}
+                          skills={previewData?.skills ?? []}
                           userSkills={[]}
                         />
                       </div>
@@ -352,12 +388,10 @@ const ProfileEdit = () => {
                     <EditGoal value={user.lookingFor} isReadOnly />
                     <EditEssentials
                       isReadyOnly
-                      {...{
-                        dateOfBirth: user.dateOfBirth,
-                        education: getValues("education"),
-                        gender: getValues("gender"),
-                        location: getValues("location"),
-                      }}
+                      dateOfBirth={user.dateOfBirth}
+                      education={getValues("education")}
+                      gender={getValues("gender")}
+                      location={getValues("location")}
                     />
                     <EditAbout value={user.about} isReadOnly />
                     <EditSkills
@@ -381,7 +415,7 @@ const ProfileEdit = () => {
               "opacity-0 pointer-events-none": !isOpen,
             }
           )}
-          onClick={() => setIsOpen(false)}
+          onClick={closeDrawer}
         >
           <div
             className={cn(
@@ -397,7 +431,6 @@ const ProfileEdit = () => {
                   control={control}
                   name="dateOfBirth"
                   render={({ field }) => {
-                    // Convert form value to CalendarDate
                     const value = field.value
                       ? parseDate(field.value.split("T")[0])
                       : undefined;
@@ -425,20 +458,21 @@ const ProfileEdit = () => {
                             clearErrors("dateOfBirth");
                           }
                         }}
+                        aria-label="Select your date of birth"
                       />
                     );
                   }}
                 />
                 {errors.dateOfBirth && (
-                  <span className="text-xs text-danger">{`${errors?.dateOfBirth.message}`}</span>
+                  <span className="text-xs text-danger">
+                    {errors.dateOfBirth.message}
+                  </span>
                 )}
                 <Button
                   variant="bordered"
                   color={!errors.dateOfBirth ? "default" : "danger"}
                   onPress={() => {
-                    if (errors.dateOfBirth) {
-                      return;
-                    }
+                    if (errors.dateOfBirth) return;
                     setIsOpen(false);
                   }}
                 >
@@ -454,7 +488,11 @@ const ProfileEdit = () => {
                   control={control}
                   name="gender"
                   render={({ field }) => (
-                    <ul className="grid w-full gap-2 grid-rows-3">
+                    <ul
+                      className="grid w-full gap-2 grid-rows-3"
+                      role="radiogroup"
+                      aria-label="Select your gender"
+                    >
                       {["male", "female", "other"].map((g) => (
                         <li key={g}>
                           <input
@@ -464,6 +502,7 @@ const ProfileEdit = () => {
                             value={g}
                             checked={field.value === g}
                             className="hidden peer"
+                            aria-label={`Select ${g} as gender`}
                           />
                           <label
                             htmlFor={g}
@@ -479,14 +518,7 @@ const ProfileEdit = () => {
                     </ul>
                   )}
                 />
-                <Button
-                  onPress={() => {
-                    setIsOpen(false);
-                    setActiveDropDown(null);
-                  }}
-                >
-                  Done
-                </Button>
+                <Button onPress={closeDrawer}>Done</Button>
               </div>
             )}
 
@@ -504,7 +536,8 @@ const ProfileEdit = () => {
                 <Input
                   {...register("location")}
                   className="w-full"
-                  label={"Location"}
+                  label="Location"
+                  aria-label="Enter your location"
                 />
                 <Button onPress={() => setIsOpen(false)}>Save</Button>
               </div>
@@ -517,13 +550,15 @@ const ProfileEdit = () => {
                   {...register("education")}
                   className="w-full"
                   title="Education Information"
+                  aria-label="Enter your highest education level"
                 />
                 <Button onPress={() => setIsOpen(false)}>Save</Button>
               </div>
             )}
           </div>
         </div>
-        {/* submit button */}
+
+        {/* Submit button */}
         {!context.isBottomNavActive && (
           <span className="w-full flex justify-center">
             <Button

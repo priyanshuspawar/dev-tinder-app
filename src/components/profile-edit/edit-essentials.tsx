@@ -8,7 +8,6 @@ const EditEssentials = ({
   gender,
   education,
   isReadyOnly = false,
-  location,
   selfView = false,
 }: {
   setActiveDropDown?: React.Dispatch<React.SetStateAction<string | null>>;
@@ -16,7 +15,6 @@ const EditEssentials = ({
   dateOfBirth: string | undefined | null;
   gender: "male" | "female" | "other" | undefined;
   education: string | null | undefined;
-  location: string | null | undefined;
   isReadyOnly?: boolean;
   selfView?: boolean;
 }) => {
@@ -133,25 +131,6 @@ const EditEssentials = ({
             </span>
           </div>
           <Divider />
-          {/* Location */}
-          <div
-            onClick={() => {
-              handleOpenDropdown("location");
-            }}
-            className="bg-secondary-50 cursor-pointer rounded-b-lg py-2 px-2 flex justify-between items-center group"
-          >
-            <span className="text-foreground-100 group-hover:text-primary-500 text-sm font-semibold transition-colors">
-              Location
-            </span>
-            <span
-              className={cn(
-                { underline: location },
-                "text-foreground-300 text-sm group-hover:text-secondary-500"
-              )}
-            >
-              {location || "Enter"}
-            </span>
-          </div>
         </div>
       )}
     </>

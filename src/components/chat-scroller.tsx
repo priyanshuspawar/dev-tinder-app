@@ -3,7 +3,6 @@ import { motion, useInView } from "framer-motion";
 import { useEffect, useRef } from "react";
 import MessageBubble from "./message-bubble";
 import dayjs from "dayjs";
-import { useWindowSize } from "usehooks-ts";
 
 const ChatScroller = ({
   chatId,
@@ -67,7 +66,7 @@ const ChatScroller = ({
       console.log("fetch after");
     }
   }, [upInview, downInView]);
-  const { width = 0, height = 0 } = useWindowSize();
+
   // Fixed scroll to top logic for flex-col-reverse
   useEffect(() => {
     if (isAnchored && scrollRef.current) {
@@ -76,7 +75,6 @@ const ChatScroller = ({
       const scrollContainer = scrollRef.current;
 
       let scrollval = scrollContainer.scrollHeight - 380;
-      console.log(height, scrollval);
       scrollContainer.scrollTo({
         top: -scrollval,
         behavior: "instant",

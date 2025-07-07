@@ -2,25 +2,30 @@ import EditAbout from "@/components/profile-edit/edit-about";
 import EditEssentials from "@/components/profile-edit/edit-essentials";
 import EditGoal from "@/components/profile-edit/edit-goal";
 import { EditSkills } from "@/components/profile-edit/edit-skills";
-import { UserProfile } from "@/queries/types";
 import useAuthStore from "@/store/authStore";
 import { getAge, getProfilePhoto } from "@/utils/helpers";
-import { Avatar, cn } from "@heroui/react";
-import { Icon } from "@iconify/react";
-import { useQueryClient } from "@tanstack/react-query";
+import { Avatar, Badge, Button, Card, cn } from "@heroui/react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ChevronRight, Heart, Pencil, Settings } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getProfileCompletionStatus } from "@/queries/profile";
+import clsx from "clsx";
 const ProfilePage = () => {
-  const queryClient = useQueryClient();
+  const { data: percentage } = useQuery({
+    queryKey: ["profile-completion"],
+    queryFn: getProfileCompletionStatus,
+  });
   const { user } = useAuthStore();
   const navigation = useNavigate();
   const [activeSlide, setActiveSlide] = useState(0);
   const handleTabClick = () => {
     setActiveSlide((activeSlide + 1) % pictures.length);
   };
-  if (!user) return;
+  if (!user || !percentage) return;
   const {
     firstName,
+    lastName,
     dateOfBirth,
     pictures,
     lookingFor,
@@ -31,40 +36,84 @@ const ProfilePage = () => {
   } = user;
   return (
     <div className="flex flex-col items-center overflow-hidden w-full h-full lg:justify-center">
-      <div className="w-[48rem] sm:w-[60rem] md:w-[66rem] lg:hidden px-10 h-fit py-16 rounded-b-[20rem] sm:rounded-b-[30rem] md:rounded-b-[48rem] bg-secondary-50">
-        <div className="flex flex-col items-center">
-          <Avatar
-            className="w-36 h-36"
-            src={getProfilePhoto(pictures)}
-            showFallback={true}
-            alt="profile photo"
-          />
-          <h2 className="text-2xl font-medium">
-            {firstName}
-            <span className="text-xl">
-              {dateOfBirth ? ", " + getAge(dateOfBirth) : ""}
-            </span>
-          </h2>
-        </div>
-        <div className="flex justify-center gap-32 my-2 sm:my-4 md:my-6">
-          <div
-            onClick={() => {
-              navigation("/dashboard/profile/edit");
-            }}
-            className="flex flex-col items-center gap-1 cursor-pointer"
+      <div className="lg:hidden flex flex-col w-full px-6 gap-4 py-20">
+        <div className="flex flex-col items-center gap-2">
+          <Avatar src={getProfilePhoto(pictures)} className="w-32 h-32" />
+
+          <label htmlFor="avatar" className="text-xl font-semibold">
+            {firstName + " " + (lastName ?? "")}
+          </label>
+          <Card
+            className={clsx(
+              "rounded-full text-sm p-2",
+              percentage >= 65
+                ? "bg-success-400"
+                : percentage < 30
+                  ? "bg-danger-400"
+                  : "bg-warning-400"
+            )}
           >
-            <span className="flex w-fit flex-col bg-secondary-200 border-1 border-white/60 p-3 rounded-full">
-              <Icon icon={"ic:round-edit"} className="text-2xl" />
-            </span>
-            <span className="font-semibold text-xs">Edit Profile</span>
-          </div>
-          <div className="flex flex-col items-center gap-1 cursor-pointer">
-            <span className="flex w-fit flex-col bg-secondary-200 border-1 border-white/60 p-3 rounded-full">
-              <Icon icon={"mdi:settings"} className="text-2xl" />
-            </span>
-            <span className="font-semibold text-xs">Settings</span>
-          </div>
+            Profile Complete {percentage} %
+          </Card>
         </div>
+        {/* edit profile */}
+        <Card
+          className="py-4 flex flex-row gap-2 px-2 items-center bg-gradient-to-br from-secondary-50 to-secondary-400"
+          shadow="md"
+          isHoverable
+          isPressable
+          onPress={() => {
+            navigation("/dashboard/profile/edit");
+          }}
+        >
+          <Button isIconOnly radius="full" size="md" color="secondary">
+            <Pencil className="w-5 h-5" />
+          </Button>
+          <div className="w-full flex flex-col items-start">
+            <label className="font-semibold">Edit profile</label>
+            <p className="text-xs text-default-700">
+              Update your photos and info
+            </p>
+          </div>
+          <ChevronRight />
+        </Card>
+        <Card
+          className="py-4 flex flex-row gap-2 px-2 items-center bg-gradient-to-br from-primary-50 to-primary-400"
+          shadow="md"
+          isHoverable
+          isPressable
+          onPress={() => {
+            navigation("/dashboard/profile/settings");
+          }}
+        >
+          <Button isIconOnly radius="full" size="md" color="primary">
+            <Settings className="w-5 h-5" />
+          </Button>
+          <div className="w-full flex flex-col items-start">
+            <label className="font-semibold">Settings</label>
+            <p className="text-xs text-default-700">
+              Privacy, notifications & more
+            </p>
+          </div>
+          <ChevronRight />
+        </Card>
+        <Card
+          className="py-4 flex flex-row gap-2 px-2 items-center bg-gradient-to-br from-default-50 to-default-200"
+          shadow="md"
+          isHoverable
+          isPressable
+        >
+          <Button isIconOnly radius="full" size="md" color="danger">
+            <Heart className="w-5 h-5" />
+          </Button>
+          <div className="w-full flex flex-col items-start">
+            <label className="font-semibold">Premium</label>
+            <p className="text-xs text-default-700">
+              Get more matches & features
+            </p>
+          </div>
+          <ChevronRight />
+        </Card>
       </div>
       <div className="hidden lg:flex flex-col w-[24rem] mx-auto h-[90%] overflow-y-scroll scrollbar-hide rounded-lg shadow-lg shadow-default-200/35 items-center">
         {/* header */}

@@ -20,6 +20,7 @@ import ConnectionProfileView from "./pages/connection-profile-view";
 import { useMediaQuery } from "usehooks-ts";
 import Chat from "./pages/chat";
 import ConnectionsPage from "./pages/connectionsPage";
+import ProfileSettings from "./pages/settings";
 const App = () => {
   // Queries
   const { isLoading } = useQuery(userQueryOptions);
@@ -64,6 +65,7 @@ const App = () => {
             )}
             <Route path="profile" element={<ProfileView />} />
             <Route path="profile/edit" element={<ProfileEdit />} />
+            <Route path="profile/settings" element={<ProfileSettings />} />
           </Route>
           {/* Add more protected routes here */}
         </Route>

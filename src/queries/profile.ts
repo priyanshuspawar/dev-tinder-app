@@ -115,3 +115,11 @@ export const userQueryOptions: UseQueryOptions = {
   staleTime: 1000,
   retry: false,
 };
+
+export const getProfileCompletionStatus = async () => {
+  const res = await axios.get<{ profileCompletion: number }>(
+    `${API_URL}/profile/completion`,
+    { withCredentials: true }
+  );
+  return res.data.profileCompletion;
+};

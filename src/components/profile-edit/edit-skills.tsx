@@ -79,6 +79,7 @@ const EditSkills = ({
               color="secondary"
               key={field.id}
               onClose={() => remove(index)}
+              aria-label={field.label}
             >
               {field.label}
             </Chip>

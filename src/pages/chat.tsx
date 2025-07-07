@@ -24,7 +24,7 @@ const Chat = () => {
   const [pagination, setPagination] = useState<Pagination>();
   const limit = 20;
   const { data: chatInfo } = useQuery({
-    queryKey: ["chatInfo"],
+    queryKey: ["chatInfo", connectionId],
     queryFn: () => chatinitData(connectionId!),
     staleTime: 1000 * 60 * 20,
   });

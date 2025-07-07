@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import FeedCard from "@/components/feed-card";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getFeed } from "@/queries/profile";
 import { Avatar } from "@heroui/react";
 import { motion } from "framer-motion";
@@ -8,21 +8,25 @@ import { useOutletContext } from "react-router-dom";
 import { cn, getProfilePhoto } from "@/utils/helpers";
 import { Bug } from "lucide-react";
 import useAuthStore from "@/store/authStore";
-import useSocket from "@/store/socketStore";
 
 const Dashboard = () => {
   const { isBottomNavActive } = useOutletContext<{
     isFullModeActive: boolean;
     isBottomNavActive: boolean;
+    geoLocation: {
+      lat: number;
+      lng: number;
+    };
   }>();
   const [page, setPage] = useState(1);
-  const { socket } = useSocket();
+
   const { data: feed, isLoading } = useQuery({
     queryKey: ["feed"],
     queryFn: () => getFeed(page),
   });
   const [profileActiveSlide, setProfileActiveSlide] = useState(0);
   const { user } = useAuthStore();
+
   if (!user) {
     return;
   }

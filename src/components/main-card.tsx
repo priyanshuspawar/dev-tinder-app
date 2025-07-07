@@ -13,9 +13,9 @@ const MainCard = ({
 }) => {
   return (
     <ScrollShadow
-      visibility="bottom"
+      visibility="none"
       className={cn(
-        "relative w-full h-[91%] scrollbar-hide",
+        "relative w-full h-screen scrollbar-hide",
         scrollEnable ? "overflow-y-scroll" : "overflow-y-hidden"
       )}
     >

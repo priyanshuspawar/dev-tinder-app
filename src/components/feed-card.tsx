@@ -1,4 +1,4 @@
-import { feedUser, UserProfile } from "@/queries/types";
+import { feedUser } from "@/queries/types";
 import { Chip } from "@heroui/react";
 import { motion, useMotionValue, useTransform } from "motion/react";
 import { Dispatch } from "react";
@@ -11,7 +11,7 @@ import EditAbout from "./profile-edit/edit-about";
 import { EditSkills } from "./profile-edit/edit-skills";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendRequest } from "@/queries/profile";
-import clsx from "clsx";
+import { getDistance } from "geolib";
 import useAuthStore from "@/store/authStore";
 
 type Props = feedUser & {
@@ -32,8 +32,8 @@ const FeedCard = ({
   activeSlide,
   setActiveSlide,
 }: Props) => {
-  const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const { mutateAsync } = useMutation({
     mutationFn: sendRequest,
     onMutate: async () => {
@@ -70,6 +70,7 @@ const FeedCard = ({
     [-offsetBoundary, 0, offsetBoundary],
     [0.8, 1, 1.5]
   );
+
   const userSkills = user?.skills.map((e) => e.label);
   // Handle swipe removal
   const handleDragEnd = (userId: string) => {
@@ -109,31 +110,27 @@ const FeedCard = ({
   };
 
   const { toggleFullMode, isFullModeActive } = useSideBarStore();
+  if (!user) {
+    return;
+  }
   return (
-    <div
-      key={cardId}
-      className={clsx(
-        "w-[97%] md:w-[96%] lg:w-full h-[90%] relative my-4 rounded-lg flex flex-col items-center",
-        !isFullModeActive ? "bg-default-50" : ""
-      )}
-    >
+    <div key={cardId} className="w-full h-full">
+      {/*rm classname = "realive" */}
       {/* Draggable Card */}
       <motion.div
         drag={isFullModeActive ? false : "x"}
         dragConstraints={{ left: 0, right: 0 }}
         onDragEnd={() => handleDragEnd(cardId)}
         style={{ x, opacity, rotate }}
-        className={clsx(
-          "w-[104%] h-[98%] relative shadow-default-200/75 rounded-lg overflow-hidden",
-          isFullModeActive ? "shadow" : "shadow-lg"
-        )}
+        className="w-full h-full"
       >
         <div
           className={cn(
-            "h-full w-full rounded-lg overflow-y-scroll scrollbar-hide relative"
-            // {
-            //   "gradient-mask-b-40": !isFullModeActive,
-            // }
+            "h-full w-full bg-background rounded-lg scrollbar-hide relative",
+            {
+              "gradient-mask-b-40": !isFullModeActive,
+              "overflow-y-scroll": isFullModeActive,
+            }
           )}
         >
           <div
@@ -200,7 +197,7 @@ const FeedCard = ({
           {/* USER DETAILED INFO ONLY SHOW WHEN FULL MODE ENABLED */}
           {/* RELATIONSHIP GOALS */}
           {isFullModeActive && (
-            <div className="mt-2 mb-20 px-2 bg-background flex flex-col gap-2">
+            <div className="mt-2 mb-20 px-2 flex flex-col gap-2">
               <EditGoal value={lookingFor} isReadOnly />
               <EditEssentials
                 isReadyOnly
@@ -221,7 +218,7 @@ const FeedCard = ({
           className={cn(
             isFullModeActive &&
               "opacity-0 transition-opacity duration-250 ease-in-out",
-            "px-4 absolute bottom-0 w-full bg-gradient-to-b from-black/0 via-black/30 to-black pt-8 pb-12"
+            "p-6 absolute bottom-20 w-full"
           )}
         >
           <div className="flex justify-between items-center w-full">
@@ -245,8 +242,8 @@ const FeedCard = ({
           <SlideDescription
             about={about}
             activeSlide={activeSlide}
-            education={essentials.education}
-            location={essentials.location}
+            education={essentials?.education}
+            location={essentials?.location?.coordinates}
             gender={gender}
             lookingFor={lookingFor}
             skills={skills}
@@ -258,8 +255,9 @@ const FeedCard = ({
       <div
         className={cn(
           "absolute bottom-0 z-50 w-full h-fit flex flex-col",
-          isFullModeActive &&
-            "pb-4 transition-all transform duration-200 ease-in-out"
+          isFullModeActive
+            ? "pb-2 transition-all transform duration-200 ease-in-out bg-gradient-to-t from-black/80 via-black/40 to-black/0"
+            : "pb-8 bg-gradient-to-t from-black via-black/80 to-black/0"
         )}
       >
         <div className="flex justify-center gap-6">
@@ -302,7 +300,7 @@ const ActionBtn = ({
 }) => (
   <motion.button onClick={onClick} whileTap={{ scale: 0.9 }}>
     <motion.div
-      className="flex items-center justify-center w-[3.5rem] h-[3.5rem] rounded-full bg-default shadow transition-all duration-100 ease-out hover:scale-110 hover:bg-default-300"
+      className="flex items-center justify-center w-[50px] h-[50px] rounded-full bg-default shadow transition-all duration-100 ease-out hover:scale-110 hover:bg-default-300"
       style={{ scale }}
     >
       <Icon icon={icon} className={`w-6 h-6 ${color}`} />
@@ -318,7 +316,7 @@ type SlideDescriptionProps = {
   about: string | undefined;
   lookingFor: string | undefined;
   gender: string | undefined;
-  location: string | undefined;
+  location: [number, number] | undefined;
   education: string | undefined;
   activeSlide: number;
   selfProfileView?: boolean;
@@ -333,6 +331,7 @@ export const SlideDescription = ({
   activeSlide,
   userSkills,
 }: SlideDescriptionProps) => {
+  const { user } = useAuthStore();
   const getPropForPreview = () => {
     if (activeSlide === 0)
       return about
@@ -364,12 +363,26 @@ export const SlideDescription = ({
   };
 
   const element = selfProfileView ? getPropForPreview() : getPropForFeed();
+  const distance = getDistance(
+    {
+      lng: user?.essentials.location.coordinates?.[0] ?? 0,
+      lat: user?.essentials.location.coordinates?.[1] ?? 0,
+    },
+    {
+      lng: location?.length == 2 ? location[0] : 0,
+      lat: location?.length == 2 ? location[1] : 0,
+    }
+  );
   return (
     <>
-      {element?.key == "location" && (
+      {element?.key == "location" && location && (
         <span className="flex items-center gap-1 my-1 font-medium text-sm">
           <Icon icon={"akar-icons:location"} className="text-white" />
-          <span>16 km away</span>
+          <span>
+            {distance < 1000
+              ? `${distance} meters away`
+              : `${(distance / 1000).toFixed(2)} km away`}
+          </span>
         </span>
       )}
       {element?.key == "about" && (

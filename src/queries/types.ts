@@ -3,7 +3,10 @@ import { updateSchema } from "@/utils/validation-schema";
 
 type Essentials = {
   education?: string;
-  location?: string;
+  location: {
+    type: "Point";
+    coordinates: [number, number];
+  };
 };
 type skill = {
   _id: string;

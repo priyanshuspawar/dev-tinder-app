@@ -62,10 +62,9 @@ const ConnectionsPage = () => {
         </div>
         <Divider />
       </div>
-      {/* WIP:chat */}
       <div className="flex flex-col gap-2">
         <span className="text-sm font-semibold">Chats</span>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center gap-4">
           {!userConnections ? (
             <Spinner />
           ) : (

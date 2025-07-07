@@ -10,8 +10,8 @@ interface AuthState {
   login: (userData: UserProfile) => void;
   logout: () => void;
   checkAuthStatus: () => void;
+  setLocation: (coordinates: [number, number]) => void;
 }
-
 const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isAppLoading: true,
@@ -27,7 +27,7 @@ const useAuthStore = create<AuthState>((set) => ({
   },
   logout: () => {
     // Assuming the token is removed from cookies by the server
-    set({ isAuthenticated: false });
+    set({ isAuthenticated: false, user: null });
   },
   checkAuthStatus: async () => {
     try {
@@ -42,6 +42,22 @@ const useAuthStore = create<AuthState>((set) => ({
     } finally {
       set({ isAppLoading: false });
     }
+  },
+  setLocation: (coordinates) => {
+    set((prev) => {
+      if (prev.user) {
+        return {
+          user: {
+            ...prev.user,
+            essentials: {
+              location: { type: "Point", coordinates },
+              education: prev.user.essentials?.education,
+            },
+          },
+        };
+      }
+      return prev;
+    });
   },
 }));
 

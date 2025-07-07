@@ -61,25 +61,28 @@ const SendMessageBar = ({ chatId }: { chatId: string }) => {
     reset();
   };
   return (
-    <form
-      onSubmit={handleSubmit(onSendMessage)}
-      className="flex gap-2 px-1 my-2"
-    >
-      <Textarea
-        {...register("message")}
-        placeholder="Type your message"
-        radius="full"
-        minRows={1}
-        fullWidth
-        isMultiline={false}
-      />
-      <button
-        type="submit"
-        className="bg-default-100 p-2 w-10 h-10 rounded-full"
+    <div className="bg-secondary-50">
+      <form
+        onSubmit={handleSubmit(onSendMessage)}
+        className="flex gap-2 px-1 my-2"
       >
-        <SendHorizonal className="text-primary" />
-      </button>
-    </form>
+        <Textarea
+          {...register("message")}
+          placeholder="Type your message"
+          radius="full"
+          minRows={1}
+          color="default"
+          fullWidth
+          isMultiline={false}
+        />
+        <button
+          type="submit"
+          className="p-2 w-10 h-10 rounded-full bg-default-100"
+        >
+          <SendHorizonal className="text-primary-600" />
+        </button>
+      </form>
+    </div>
   );
 };
 

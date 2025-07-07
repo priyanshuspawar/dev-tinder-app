@@ -31,7 +31,7 @@ const ChatHeader = ({ otherUserId }: props) => {
   }
 
   return (
-    <div className="h-16 flex items-center px-2 gap-2 py-2">
+    <div className="h-16 md:h-[10vh] flex items-center px-2 gap-2 md:py-6 md:border-l-1 border-secondary-300 bg-gradient-to-bl from-secondary-200 to-secondary-500">
       <button onClick={() => navigation(-1)}>
         <ChevronLeft className="w-5 h-5" />
       </button>
@@ -40,7 +40,7 @@ const ChatHeader = ({ otherUserId }: props) => {
         src={getProfilePhoto(otherUser?.pictures)}
       />
       <div className="flex flex-col">
-        <label className="font-semibold text-sm lg:text-base">{`${otherUser?.firstName} ${otherUser?.lastName ?? ""}`}</label>
+        <label className="font-semibold text-sm md:text-base lg:text-lg">{`${otherUser?.firstName} ${otherUser?.lastName ?? ""}`}</label>
 
         {onlineUsers.has(otherUserId) && (
           <span className="text-xs lg:text-sm">online</span>

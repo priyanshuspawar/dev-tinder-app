@@ -15,6 +15,7 @@ interface ConnectionStore {
   setUserConnections: (updatedConnections: Connections[]) => void;
   addOnlineUser: (user: string[]) => void;
   removeOnlineUser: (user: string) => void;
+  resetConnections: () => void;
 }
 
 const useConnectionStore = create<ConnectionStore>((set, get) => ({
@@ -50,6 +51,13 @@ const useConnectionStore = create<ConnectionStore>((set, get) => ({
       const newSet = new Set(prev.onlineUsers);
       newSet.delete(user);
       return { onlineUsers: newSet };
+    });
+  },
+  resetConnections: () => {
+    set({
+      connectionRequests: [],
+      userConnections: [],
+      onlineUsers: new Set(),
     });
   },
 }));

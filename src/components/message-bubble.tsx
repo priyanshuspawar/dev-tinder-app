@@ -45,7 +45,7 @@ const MessageBubble = ({
     }
   }, [isInView]);
   return (
-    <div ref={ref} className="px-2">
+    <div ref={ref} className="px-2 md:px-4">
       {showDivider && (
         <div className="w-full flex justify-center">
           <span className="text-sm bg-default-100 px-2 py-1 rounded-lg">
@@ -70,7 +70,7 @@ const MessageBubble = ({
         <div className="flex relative">
           <div
             className={clsx(
-              "px-2 py-2 w-fit items-end flex gap-1 ",
+              "px-2 py-2 md:px-3 md:py-3 lg:px-4 lg:py-4 w-fit items-end flex gap-1 ",
               message.isSentByCurrentUser
                 ? "bg-primary-100 rounded-t-lg rounded-bl-lg"
                 : "bg-default-200 rounded-t-lg rounded-br-lg"

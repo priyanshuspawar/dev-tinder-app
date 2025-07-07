@@ -31,6 +31,7 @@ interface ChatStore {
     chatId: string,
     message: { _id: string } & Partial<Omit<Message, "_id">>
   ) => void;
+  removeAllChats: () => void;
 }
 
 const useChatsStore = create<ChatStore>((set, get) => ({
@@ -120,6 +121,11 @@ const useChatsStore = create<ChatStore>((set, get) => ({
         [chatId]: update,
       },
     }));
+  },
+  removeAllChats: () => {
+    set({
+      chats: {},
+    });
   },
 }));
 

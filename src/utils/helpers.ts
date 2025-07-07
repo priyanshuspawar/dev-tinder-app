@@ -70,9 +70,7 @@ export const getProfilePhoto = (arr?: { _id: string; imgUrl: string }[]) => {
   if (!arr || arr.length === 0) {
     return "https://www.svgrepo.com/show/170633/profile-user.svg";
   }
-  return (
-    arr[0]?.imgUrl ?? "https://www.svgrepo.com/show/170633/profile-user.svg"
-  );
+  return arr[0]?.imgUrl ?? undefined;
 };
 
 export const userPlaceHolder =
@@ -82,13 +80,16 @@ export const getSlideImage = ({
   pictures,
   activeSlide,
 }: {
-  pictures: { _id: string; imgUrl: string }[] | undefined;
+  pictures: { _id: string; imgUrl: string | File }[] | undefined;
   activeSlide: number;
 }) => {
   if (!pictures) {
     return "";
   }
   if (activeSlide < pictures.length) {
+    if (pictures[activeSlide].imgUrl instanceof File) {
+      return URL.createObjectURL(pictures[activeSlide].imgUrl);
+    }
     return pictures[activeSlide].imgUrl;
   }
   return "";
