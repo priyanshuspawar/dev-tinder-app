@@ -400,10 +400,10 @@ const DashboardLayout = () => {
           !location.pathname.includes("/dashboard/chat") && (
             <section
               className={cn(
-                "flex justify-evenly w-full h-fit",
+                "flex justify-evenly w-full h-fit pt-3 pb-3",
                 location.pathname == "/dashboard"
-                  ? "pb-3 bg-gradient-to-b from-black/80 to-black"
-                  : "pb-3 pt-3 bg-secondary-50"
+                  ? "bg-gradient-to-b from-black/80 to-black"
+                  : "bg-secondary-50"
               )}
             >
               <Icon
@@ -413,7 +413,7 @@ const DashboardLayout = () => {
                   location.pathname == "/dashboard"
                     ? "text-secondary-500"
                     : "text-default-500 hover:text-default-700",
-                  "text-3xl cursor-pointer transition-all transform duration-250 ease-in-out w-9 h-9"
+                  "text-3xl cursor-pointer transition-all transform duration-250 ease-in-out w-8 h-8"
                 )}
               />
               <span
@@ -428,7 +428,7 @@ const DashboardLayout = () => {
                     location.pathname == "/dashboard/connections"
                       ? "text-secondary-500"
                       : "text-default-500 hover:text-default-700",
-                    "text-3xl cursor-pointer transition-all transform duration-250 ease-in-out w-9 h-9"
+                    "text-3xl cursor-pointer transition-all transform duration-250 ease-in-out w-8 h-8"
                   )}
                 />
                 {Object.keys(newChatMessages).length > 0 && (
@@ -439,7 +439,7 @@ const DashboardLayout = () => {
               </span>
               <Avatar
                 isBordered={location.pathname.includes("/dashboard/profile")}
-                className="cursor-pointer w-9 h-9"
+                className="cursor-pointer w-8 h-8"
                 onClick={() => navigation("/dashboard/profile")}
                 color="primary"
                 size="sm"

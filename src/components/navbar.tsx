@@ -19,6 +19,7 @@ import { Icon } from "@iconify/react";
 import { cn } from "@heroui/react";
 
 import { AcmeIcon } from "./acme";
+import clsx from "clsx";
 
 const menuItems = ["About", "Privacy Policy", "Safety", "Support"];
 
@@ -28,44 +29,66 @@ export default function NavbarMain(props: NavbarProps) {
   return (
     <Navbar
       {...props}
+      className={clsx(
+        isMenuOpen ? "bg-background" : "bg-transparent",
+        "top-0 absolute transition-colors duration-200 ease-in-out"
+      )}
+      position="static"
       classNames={{
         base: cn("border-default-100", {
           "bg-default-200/50 dark:bg-default-100/50": isMenuOpen,
         }),
-        wrapper: "w-full justify-center",
+        wrapper: "w-full justify-center bg-transparent",
         item: "hidden md:flex",
       }}
       height="60px"
+      isBlurred={false}
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
     >
       {/* Left Content */}
-      <NavbarBrand>
+      <NavbarBrand className="flex items-center">
         <div className="rounded-full bg-foreground text-background">
           <AcmeIcon size={34} />
         </div>
-        <span className="ml-2 text-small font-medium">ACME</span>
+        <span className="ml-2 text-xl font-extrabold">DevTinder</span>
       </NavbarBrand>
 
       {/* Center Content */}
       <NavbarContent justify="center">
         <NavbarItem isActive>
-          <Link className="text-default-500" href="#" size="sm">
+          <Link
+            className="text-default-900 font-bold text-lg tracking-wide"
+            href="#"
+            size="sm"
+          >
             Home
           </Link>
         </NavbarItem>
         <NavbarItem>
-          <Link className="text-default-500" href="#" size="sm">
+          <Link
+            className="text-default-900 font-bold text-lg tracking-wide"
+            href="#"
+            size="sm"
+          >
             Privacy Policy
           </Link>
         </NavbarItem>
         <NavbarItem>
-          <Link className="text-default-500" href="#" size="sm">
+          <Link
+            className="text-default-900 font-bold text-lg tracking-wide"
+            href="#"
+            size="sm"
+          >
             About
           </Link>
         </NavbarItem>
         <NavbarItem>
-          <Link className="text-default-500" href="#" size="sm">
+          <Link
+            className="text-default-900 font-bold text-lg tracking-wide"
+            href="#"
+            size="sm"
+          >
             Safety
           </Link>
         </NavbarItem>
@@ -74,11 +97,6 @@ export default function NavbarMain(props: NavbarProps) {
       {/* Right Content */}
       <NavbarContent className="hidden md:flex" justify="end">
         <NavbarItem className="ml-2 !flex gap-2">
-          <Link href="/login">
-            <Button className="text-default-500" radius="full" variant="light">
-              Login
-            </Button>
-          </Link>
           <Button
             className="bg-foreground font-medium text-background"
             color="secondary"
@@ -86,25 +104,25 @@ export default function NavbarMain(props: NavbarProps) {
             radius="full"
             variant="flat"
           >
-            Get Started
+            <Link
+              href={"/login"}
+              className="text-default-50 font-semibold text-lg"
+            >
+              Get Started
+            </Link>
           </Button>
         </NavbarItem>
       </NavbarContent>
 
       <NavbarMenuToggle className="text-default-400 md:hidden" />
 
-      <NavbarMenu className="top-[calc(var(--navbar-height)_-_1px)] max-h-fit bg-default-200/50 pb-6 pt-6 shadow-medium backdrop-blur-md backdrop-saturate-150 dark:bg-default-100/50">
-        <NavbarMenuItem>
-          <Button fullWidth as={Link} href="/#" variant="faded">
-            Sign In
-          </Button>
-        </NavbarMenuItem>
+      <NavbarMenu className="top-[calc(var(--navbar-height)_-_1px)] max-h-fit bg-background pb-6 pt-6 shadow-medium backdrop-blur-md backdrop-saturate-150 transition-all transform ease-out duration-100">
         <NavbarMenuItem className="mb-4">
           <Button
             fullWidth
             as={Link}
             className="bg-foreground text-background"
-            href="/#"
+            href="/login"
           >
             Get Started
           </Button>

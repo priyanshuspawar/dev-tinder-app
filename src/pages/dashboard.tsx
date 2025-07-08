@@ -1,10 +1,10 @@
 import { useState } from "react";
 import FeedCard from "@/components/feed-card";
 import { useQuery } from "@tanstack/react-query";
-import { getFeed } from "@/queries/profile";
-import { Avatar } from "@heroui/react";
+import { getFeed, getProfileCompletionStatus } from "@/queries/profile";
+import { Avatar, Chip } from "@heroui/react";
 import { motion } from "framer-motion";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { cn, getProfilePhoto } from "@/utils/helpers";
 import { Bug } from "lucide-react";
 import useAuthStore from "@/store/authStore";
@@ -18,6 +18,11 @@ const Dashboard = () => {
       lng: number;
     };
   }>();
+  const { data: profilePercentage } = useQuery({
+    queryKey: ["profile-completion"],
+    queryFn: getProfileCompletionStatus,
+    refetchOnMount: true,
+  });
   const [page, setPage] = useState(1);
 
   const { data: feed, isLoading } = useQuery({
@@ -26,14 +31,30 @@ const Dashboard = () => {
   });
   const [profileActiveSlide, setProfileActiveSlide] = useState(0);
   const { user } = useAuthStore();
-
+  const navigation = useNavigate();
   if (!user) {
     return;
+  }
+  if (!profilePercentage || profilePercentage < 70) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center">
+        <Chip
+          className="font-semibold text-xs cursor-pointer select-none"
+          color="danger"
+          variant="shadow"
+          onClick={() => {
+            navigation("/dashboard/profile/edit");
+          }}
+        >
+          Please Complete Your Profile to 70%
+        </Chip>
+      </div>
+    );
   }
   return (
     <div
       className={cn(
-        "h-full flex flex-col items-center relative",
+        "h-full overflow-hidden",
         !isBottomNavActive
           ? "w-[21rem] lg:w-[23rem] xl:w-[24rem] 2xl:w-[25rem]"
           : "w-full"
@@ -81,16 +102,16 @@ const Dashboard = () => {
           </div>
         </div>
       ) : (
-        <div className="relative w-full h-full">
-          {feed.map((card) => (
-            <FeedCard
-              activeSlide={profileActiveSlide}
-              setActiveSlide={setProfileActiveSlide}
-              key={card._id}
-              {...card}
-            />
-          ))}
-        </div>
+        // <div className="relative w-full h-full">
+        feed.map((card) => (
+          <FeedCard
+            activeSlide={profileActiveSlide}
+            setActiveSlide={setProfileActiveSlide}
+            key={card._id}
+            {...card}
+          />
+        ))
+        // </div>
       )}
     </div>
   );

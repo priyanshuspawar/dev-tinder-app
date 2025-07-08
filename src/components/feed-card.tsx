@@ -114,7 +114,7 @@ const FeedCard = ({
     return;
   }
   return (
-    <div key={cardId} className="w-full h-full">
+    <div key={cardId} className="w-full h-full relative">
       {/*rm classname = "realive" */}
       {/* Draggable Card */}
       <motion.div
@@ -172,7 +172,7 @@ const FeedCard = ({
                 : "h-full bg-center bg-cover bg-default",
               "w-full transition-height transform duration-300 ease-in-out"
             )}
-            style={{ backgroundImage: `url(${pictures[activeSlide].imgUrl})` }}
+            style={{ backgroundImage: `url(${pictures[activeSlide]?.imgUrl})` }}
           >
             <div className="w-full py-[2px] px-[6px] bg-black absolute z-30 top-2 grid grid-rows-1 grid-flow-col auto-cols-auto gap-1.5">
               {pictures.map((_, i) => {
@@ -316,7 +316,7 @@ type SlideDescriptionProps = {
   about: string | undefined;
   lookingFor: string | undefined;
   gender: string | undefined;
-  location: [number, number] | undefined;
+  location?: [number, number];
   education: string | undefined;
   activeSlide: number;
   selfProfileView?: boolean;

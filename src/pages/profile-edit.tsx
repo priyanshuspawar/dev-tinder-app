@@ -187,7 +187,6 @@ const ProfileEdit = () => {
           pictures,
           skills,
           essentials: {
-            location: data.location,
             education: data.education,
           },
         };
@@ -224,7 +223,7 @@ const ProfileEdit = () => {
   return (
     <div className="w-full h-full lg:w-[24rem] lg:h-[90%] shadow-lg shadow-default-200/35 rounded-lg relative overflow-hidden select-none">
       {!isFullModePreview && context.isBottomNavActive && (
-        <div className="flex justify-center items-center relative bg-secondary-100 p-2 text-center">
+        <div className="flex justify-center items-center relative bg-secondary-100 p-2 text-center border-b border-b-secondary-50">
           <span className="text-xl font-semibold">Edit Info</span>
           <button
             onClick={handleSubmit(onSubmit)}
@@ -239,11 +238,11 @@ const ProfileEdit = () => {
       <form
         id="update-form"
         onSubmit={handleSubmit(onSubmit)}
-        className="bg-background shadow-large lg:rounded-xl w-full h-full overflow-hidden"
+        className="bg-background shadow-large lg:rounded-xl w-full h-full"
       >
         {isFormLoading ? (
           <div className="flex w-full h-full items-center justify-center bg-white/20">
-            <Spinner size="lg" />
+            <Spinner size="lg" aria-label="Loading profile" />
           </div>
         ) : (
           <MainCard
@@ -252,32 +251,33 @@ const ProfileEdit = () => {
               isFullModePreview ? (
                 <div
                   className={cn(
-                    "flex sticky top-0 z-50",
-                    "justify-between items-center bg-secondary-50 w-full py-3 px-4"
+                    "flex sticky top-0 z-50 items-center bg-secondary-50 w-full justify-center px-2 pt-4"
                   )}
                 >
-                  <div>
-                    <span className="text-2xl tracking-wide font-semibold">
-                      {user.firstName}
-                    </span>
-                    <span className="text-lg font-medium text-gray-100 whitespace-pre">
-                      {"  "}
-                      {getAge(user.dateOfBirth)}
-                    </span>
+                  <div className="flex py-4 justify-between w-full h-fit items-center">
+                    <div>
+                      <span className="text-2xl tracking-wide font-semibold">
+                        {user.firstName}
+                      </span>
+                      <span className="text-lg font-medium text-gray-100 whitespace-pre">
+                        {"  "}
+                        {getAge(user.dateOfBirth)}
+                      </span>
+                    </div>
+                    <button
+                      className="bg-primary-300 w-7 h-7 rounded-full  aspect-square hover:scale-125 hover:bg-primary-500 transition-all transform duration-200 ease-in-out cursor-pointer flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFullMode();
+                      }}
+                      aria-label="Exit full screen preview"
+                    >
+                      <Icon
+                        className="text-xs rotate-180"
+                        icon="icon-park-solid:up-two"
+                      />
+                    </button>
                   </div>
-                  <button
-                    className="bg-primary-300 p-2 rounded-full hover:scale-125 hover:bg-primary-500 transition-all transform duration-200 ease-in-out cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFullMode();
-                    }}
-                    aria-label="Exit full screen preview"
-                  >
-                    <Icon
-                      className="text-xs rotate-180"
-                      icon="icon-park-solid:up-two"
-                    />
-                  </button>
                 </div>
               ) : (
                 <CardHeader
@@ -288,7 +288,7 @@ const ProfileEdit = () => {
             }
           >
             {currentTab === "edit" ? (
-              <div className="px-2.5 py-0.5">
+              <div className="px-2.5 py-0.5 mb-24">
                 <ProfilePhotoUpload MAX_IMAGES={MAX_IMAGES} control={control} />
                 <EditAbout register={register} />
                 <EditGoal control={control} />
@@ -302,7 +302,6 @@ const ProfileEdit = () => {
                   dateOfBirth={getValues("dateOfBirth")}
                   education={getValues("education")}
                   gender={getValues("gender")}
-                  location={getValues("location")}
                   setActiveDropDown={setActiveDropDown}
                   setIsOpen={setIsOpen}
                 />
@@ -372,7 +371,6 @@ const ProfileEdit = () => {
                           about={previewData?.about}
                           activeSlide={activeSlide}
                           education={previewData?.essentials?.education}
-                          location={previewData?.essentials?.location}
                           gender={previewData?.gender}
                           lookingFor={previewData?.lookingFor}
                           skills={previewData?.skills ?? []}
@@ -391,7 +389,6 @@ const ProfileEdit = () => {
                       dateOfBirth={user.dateOfBirth}
                       education={getValues("education")}
                       gender={getValues("gender")}
-                      location={getValues("location")}
                     />
                     <EditAbout value={user.about} isReadOnly />
                     <EditSkills
@@ -459,6 +456,7 @@ const ProfileEdit = () => {
                           }
                         }}
                         aria-label="Select your date of birth"
+                        aria-labelledby="Select your date of birth"
                       />
                     );
                   }}
@@ -469,8 +467,8 @@ const ProfileEdit = () => {
                   </span>
                 )}
                 <Button
-                  variant="bordered"
-                  color={!errors.dateOfBirth ? "default" : "danger"}
+                  variant="flat"
+                  color={!errors.dateOfBirth ? "primary" : "danger"}
                   onPress={() => {
                     if (errors.dateOfBirth) return;
                     setIsOpen(false);
@@ -518,7 +516,9 @@ const ProfileEdit = () => {
                     </ul>
                   )}
                 />
-                <Button onPress={closeDrawer}>Done</Button>
+                <Button color="primary" variant="flat" onPress={closeDrawer}>
+                  Done
+                </Button>
               </div>
             )}
 
@@ -530,29 +530,27 @@ const ProfileEdit = () => {
               />
             )}
 
-            {activeDropDown === "location" && (
-              <div className="flex flex-col items-center p-4 gap-2">
-                <h2 className="font-semibold">Enter Your Location</h2>
-                <Input
-                  {...register("location")}
-                  className="w-full"
-                  label="Location"
-                  aria-label="Enter your location"
-                />
-                <Button onPress={() => setIsOpen(false)}>Save</Button>
-              </div>
-            )}
-
             {activeDropDown === "education" && (
               <div className="flex flex-col items-center p-4 gap-2">
                 <h2 className="font-semibold">Enter Your Highest Education</h2>
                 <Input
                   {...register("education")}
-                  className="w-full"
+                  className="w-full border-secondary"
                   title="Education Information"
                   aria-label="Enter your highest education level"
+                  variant="bordered"
+                  classNames={{
+                    input: "border-secondary text-base",
+                    mainWrapper: "border-secondary",
+                  }}
                 />
-                <Button onPress={() => setIsOpen(false)}>Save</Button>
+                <Button
+                  onPress={() => setIsOpen(false)}
+                  variant="flat"
+                  color="primary"
+                >
+                  Save
+                </Button>
               </div>
             )}
           </div>

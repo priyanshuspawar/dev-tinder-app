@@ -74,5 +74,5 @@ export const updateSchema = z.object({
     .optional(),
 
   education: z.string().min(2).max(50).trim().optional(), // Fix
-  location: z.string().min(2).max(100).trim().optional(), // Fix
+  // Fix
 });

@@ -4,7 +4,7 @@ import EditGoal from "@/components/profile-edit/edit-goal";
 import { EditSkills } from "@/components/profile-edit/edit-skills";
 import useAuthStore from "@/store/authStore";
 import { getAge, getProfilePhoto } from "@/utils/helpers";
-import { Avatar, Badge, Button, Card, cn } from "@heroui/react";
+import { Avatar, Card, cn } from "@heroui/react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight, Heart, Pencil, Settings } from "lucide-react";
@@ -66,9 +66,9 @@ const ProfilePage = () => {
             navigation("/dashboard/profile/edit");
           }}
         >
-          <Button isIconOnly radius="full" size="md" color="secondary">
+          <div className="bg-secondary p-2 rounded-full">
             <Pencil className="w-5 h-5" />
-          </Button>
+          </div>
           <div className="w-full flex flex-col items-start">
             <label className="font-semibold">Edit profile</label>
             <p className="text-xs text-default-700">
@@ -86,9 +86,10 @@ const ProfilePage = () => {
             navigation("/dashboard/profile/settings");
           }}
         >
-          <Button isIconOnly radius="full" size="md" color="primary">
+          <div className="bg-primary p-2 rounded-full">
             <Settings className="w-5 h-5" />
-          </Button>
+          </div>
+
           <div className="w-full flex flex-col items-start">
             <label className="font-semibold">Settings</label>
             <p className="text-xs text-default-700">
@@ -103,9 +104,9 @@ const ProfilePage = () => {
           isHoverable
           isPressable
         >
-          <Button isIconOnly radius="full" size="md" color="danger">
+          <div className="bg-danger p-2 rounded-full">
             <Heart className="w-5 h-5" />
-          </Button>
+          </div>
           <div className="w-full flex flex-col items-start">
             <label className="font-semibold">Premium</label>
             <p className="text-xs text-default-700">

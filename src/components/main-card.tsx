@@ -15,12 +15,12 @@ const MainCard = ({
     <ScrollShadow
       visibility="none"
       className={cn(
-        "relative w-full h-screen scrollbar-hide",
+        "relative w-full h-full scrollbar-hide",
         scrollEnable ? "overflow-y-scroll" : "overflow-y-hidden"
       )}
     >
       {/* Card Header */}
-      <div className="flex w-full h-[6vh] bg-secondary-100 items-center sticky top-0 z-10">
+      <div className="flex w-full h-[6vh] items-center sticky top-0 z-10">
         {cardHeader}
       </div>
 

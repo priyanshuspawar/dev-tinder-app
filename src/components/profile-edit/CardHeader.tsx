@@ -7,7 +7,7 @@ type Props = {
 
 const CardHeader = ({ currentTab, handleTabChange }: Props) => {
   return (
-    <div className="flex items-center w-full border-b border-secondary/30 h-full">
+    <div className="flex items-center w-full bg-secondary-100 h-full overflow-hidden">
       {["edit", "preview"].map((tab, index) => (
         <h2
           key={tab}
@@ -17,7 +17,7 @@ const CardHeader = ({ currentTab, handleTabChange }: Props) => {
           className={cn(
             "inline-flex capitalize font-semibold text-lg tracking-wide w-full items-center justify-center text-center h-full cursor-pointer hover:text-primary transition-colors transform duration-300 ease-in-out",
             {
-              "border-r border-secondary/30": index === 0,
+              "border-r border-secondary-50": index === 0,
               "text-primary-600": tab === currentTab,
             }
           )}

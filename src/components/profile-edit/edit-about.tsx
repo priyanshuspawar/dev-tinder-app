@@ -37,6 +37,7 @@ const EditAbout = ({
         <h2 className="font-semibold my-2">ABOUT {firstName.toUpperCase()}</h2>
         <Textarea
           {...register("about")}
+          aria-label="about yourself"
           color="secondary"
           variant="bordered"
           classNames={{

@@ -35,6 +35,7 @@ const EditGoal = ({
             <Select
               className="w-full"
               items={lookingFor}
+              aria-label="Select Looking For"
               variant="bordered"
               classNames={{
                 mainWrapper: "bg-secondary-50",
@@ -50,6 +51,7 @@ const EditGoal = ({
               {(option) => (
                 <SelectItem
                   key={option.label}
+                  aria-label={option.label}
                   classNames={{
                     base: "data-[hover=true]:bg-primary data-[selectable=true]:focus:bg-primary",
                   }}

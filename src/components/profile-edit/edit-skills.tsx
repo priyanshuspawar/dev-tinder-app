@@ -87,6 +87,7 @@ const EditSkills = ({
           <Button
             size="sm"
             isIconOnly
+            aria-label="add skill"
             radius="full"
             color="secondary"
             onPress={() => {
@@ -115,17 +116,18 @@ const EditSkillsDropdown = ({
   const [localSkill, setLocalSkill] = React.useState("");
   return (
     <div className="flex flex-col items-center p-4 gap-2">
-      <h2 className="font-semibold">Enter a Skill</h2>
+      <h2 className="font-semibold">Enter a skill</h2>
       <Input
         label="Skill"
         onChange={(e) => {
           setLocalSkill(e.target.value);
         }}
+        aria-label="Enter skill name"
         value={localSkill}
         variant="bordered"
         className="border-secondary"
         classNames={{
-          input: "border-secondary",
+          input: "border-secondary text-base",
           mainWrapper: "border-secondary",
         }}
       />

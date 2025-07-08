@@ -177,6 +177,9 @@ export default function LoginPage() {
         </div>
         <div className="flex flex-col gap-2">
           <Button
+            onPress={async () => {
+              window.location.href = "http://localhost:5000/auth/google";
+            }}
             startContent={<Icon icon="flat-color-icons:google" width={24} />}
             variant="bordered"
           >
