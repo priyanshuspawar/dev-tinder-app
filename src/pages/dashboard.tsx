@@ -8,7 +8,7 @@ import {
   useUndoSwipe,
 } from "@/queries/profile";
 import { feedUser } from "@/queries/types";
-import { addToast, Avatar, Button, Chip } from "@heroui/react";
+import { addToast, Avatar, Button, Chip, Spinner } from "@heroui/react";
 import { motion } from "framer-motion";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { cn, getProfilePhoto } from "@/utils/helpers";
@@ -24,7 +24,7 @@ const Dashboard = () => {
       lng: number;
     };
   }>();
-  const { data: profilePercentage } = useQuery({
+  const { data: profilePercentage = 0, isPending: isCompletionPending } = useQuery({
     queryKey: ["profile-completion"],
     queryFn: getProfileCompletionStatus,
     refetchOnMount: true,
@@ -68,7 +68,15 @@ const Dashboard = () => {
   if (!user) {
     return;
   }
-  if (!profilePercentage || profilePercentage < 70) {
+  // still loading: don't flash the "complete your profile" gate at complete profiles
+  if (isCompletionPending) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+  if (profilePercentage < 70) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center">
         <Chip

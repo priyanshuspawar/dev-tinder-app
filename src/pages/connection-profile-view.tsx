@@ -162,7 +162,7 @@ const ConnectionProfileView = () => {
           about={about}
           activeSlide={activeSlide}
           education={essentials.education}
-          location={essentials.location}
+          location={essentials.location?.coordinates}
           gender={gender}
           lookingFor={lookingFor}
           skills={skills}

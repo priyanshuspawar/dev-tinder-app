@@ -11,7 +11,6 @@ import PublicRoute from "./components/public-route";
 import { Suspense } from "react";
 import ProfileView from "./pages/profile-view";
 import ProfileEdit from "./pages/profile-edit";
-import DocsPage from "./pages/about";
 import { Spinner } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import RequestReview from "./pages/request-review";
@@ -46,7 +45,6 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/about" element={<DocsPage />} />
         </Route>
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>

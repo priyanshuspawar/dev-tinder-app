@@ -205,7 +205,7 @@ const RequestReview = () => {
                               about={previewRequest?.about}
                               activeSlide={activeSlide}
                               education={previewRequest?.essentials?.education}
-                              location={previewRequest?.essentials?.location}
+                              location={previewRequest?.essentials?.location?.coordinates}
                               gender={previewRequest?.gender}
                               lookingFor={previewRequest?.lookingFor}
                               skills={previewRequest?.skills ?? []}

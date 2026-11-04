@@ -16,7 +16,8 @@ export function Provider({ children }: { children: React.ReactNode }) {
   return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
       <ToastProvider
-        placement={isMobileDevices ? "top-center" : "bottom-right"}
+        // top on desktop too: bottom-right covered the profile form's Save button
+        placement={isMobileDevices ? "top-center" : "top-right"}
       />
       {children}
     </HeroUIProvider>

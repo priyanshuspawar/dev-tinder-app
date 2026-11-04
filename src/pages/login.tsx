@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Input, Checkbox, Link, Form, Divider } from "@heroui/react";
+import { Button, Input, Checkbox, Link, Form } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -169,30 +169,7 @@ export default function LoginPage() {
             </label>
           )}
         </Form>
-        <div className="flex items-center gap-4 py-2">
-          <Divider className="flex-1" />
-          <p className="shrink-0 text-tiny text-default-500">OR</p>
-          <Divider className="flex-1" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Button
-            onPress={async () => {
-              window.location.href = "http://localhost:5000/auth/google";
-            }}
-            startContent={<Icon icon="flat-color-icons:google" width={24} />}
-            variant="bordered"
-          >
-            Continue with Google
-          </Button>
-          <Button
-            startContent={
-              <Icon className="text-default-500" icon="fe:github" width={24} />
-            }
-            variant="bordered"
-          >
-            Continue with Github
-          </Button>
-        </div>
+        {/* ponytail: Google/GitHub buttons removed — no OAuth backend exists. Add with the auth routes. */}
         <p className="text-center text-small">
           Need to create an account?&nbsp;
           <Link href="/signup" size="sm">

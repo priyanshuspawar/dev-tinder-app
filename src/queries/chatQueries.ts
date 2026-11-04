@@ -63,7 +63,7 @@ export interface ChatResponse {
 
 export const chatinitData = async (connectionId: string) => {
   const res = await axios.get<initilizeChatResponse>(
-    `http://localhost:5000/chat/initilize/${connectionId}`,
+    `${import.meta.env.VITE_API_URL}/chat/initilize/${connectionId}`,
     {
       withCredentials: true,
     }
@@ -109,7 +109,7 @@ export const getMessageOfChat = async ({
   if (limit) params.append("limit", limit.toString());
   if (loadType) params.append("loadType", loadType);
 
-  const url = `http://localhost:5000/chat/${chatId}/messages?${params.toString()}`;
+  const url = `${import.meta.env.VITE_API_URL}/chat/${chatId}/messages?${params.toString()}`;
   const res = await axios.get<getMessageResponse>(url, {
     withCredentials: true,
   });

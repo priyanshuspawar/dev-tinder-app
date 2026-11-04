@@ -31,7 +31,7 @@ const ChatScroller = ({
   });
   const didMountRef = useRef(false);
   const isInitializedRef = useRef(false);
-  const initTimeoutRef = useRef<NodeJS.Timeout>();
+  const initTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Track when messages are actually loaded and rendered
   useEffect(() => {

@@ -11,7 +11,7 @@ bun install
 bun run dev      # http://localhost:5173
 ```
 
-`.env`: `VITE_API_URL=http://localhost:5000`. Some calls still hard-code `localhost:5000` (`queries/chatQueries.ts`, `utils/socket.ts`, the Google button in `pages/login.tsx`).
+`.env`: `VITE_API_URL=http://localhost:5000`. Every REST call and the socket use it, and it's baked in at build time. On Vercel, set it to the deployed API URL. `bun run build` runs `tsc` first, so any type error fails the deploy.
 
 ## Folder layout
 
@@ -31,7 +31,6 @@ src/
     request-review.tsx     mobile: accept/reject + profile modal
     connection-profile-view.tsx   desktop: requester's profile
     chat.tsx               chat screen
-    about/blog/docs/pricing/index.tsx   HeroUI template leftovers
   components/
     feed-card.tsx          draggable card + SlideDescription (shared preview text)
     profile-edit/*         EditAbout, EditGoal, EditSkills(+Dropdown), EditEssentials, ProfilePhotoUpload, CardHeader
@@ -46,7 +45,7 @@ src/
 
 | Path | Guard | Element |
 |---|---|---|
-| `/`, `/login`, `/signup`, `/about` | `PublicRoute` (redirects logged-in users to `/dashboard`) | Home / Login / Signup / Docs |
+| `/`, `/login`, `/signup` | `PublicRoute` (redirects logged-in users to `/dashboard`) | Home / Login / Signup |
 | `/dashboard` | `ProtectedRoute` (redirects to `/login`) | `DashboardLayout` → `Dashboard` |
 | `/dashboard/profile` · `/profile/edit` · `/profile/settings` | protected | ProfileView / ProfileEdit / ProfileSettings |
 | `/dashboard/connection/profile/:id` | protected | ConnectionProfileView (desktop) |
@@ -119,7 +118,7 @@ Auth bootstrap: `App` runs `useQuery(userQueryOptions)` (`GET /profile`). On suc
 - Responsive breakpoint is **895px** (`useMediaQuery`), used in the layout, routes and toast placement.
 
 ## Dead / unused code
-`utils/messageProcessor.ts`, `utils/socket-handlers.ts` (calls hooks outside a component, which would throw), `components/unread-message.tsx`, `components/profile-card.tsx`, `components/dropdown-content/*`, `components/profile-edit/{dropzone,remove-photo-button}.tsx`, `layouts/default.tsx`, `pages/{index,blog,docs,pricing}.tsx`, `pages/layouts/home-layout.tsx`, the `newData`/`messages` fixtures in `utils/constants.ts`, and `authStore.checkAuthStatus`.
+The template pages and unused components were removed on 2026-11-04. What's left: `authStore.checkAuthStatus` (unused).
 
 ---
 
