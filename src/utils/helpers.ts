@@ -157,3 +157,24 @@ export function isLastMessageOfDate(
     "date"
   );
 }
+
+// Shrink a photo before upload: longest side <= 1080px, JPEG ~0.8 quality.
+// A 5-10 MB phone photo comes out around 150-300 KB, well under the server's 4 MB cap.
+// ponytail: native canvas, no library. Anything the browser can't decode (e.g. HEIC
+// outside Safari) is sent as-is and the server's limit still applies.
+export async function compressImage(file: File, maxSide = 1080, quality = 0.8): Promise<File> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", quality));
+    if (!blob || blob.size >= file.size) return file; // already small: keep the original
+    return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}

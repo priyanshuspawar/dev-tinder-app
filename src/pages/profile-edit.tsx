@@ -3,6 +3,7 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import MainCard from "@/components/main-card";
 import {
   cn,
+  compressImage,
   getAge,
   getMinMaxDate,
   getSlideImage,
@@ -161,9 +162,10 @@ const ProfileEdit = () => {
 
         if (pictureData.length > 0) {
           const picturesForUpload = new FormData();
-          pictureData.forEach((value) => {
-            picturesForUpload.append("images", value.imgUrl);
-          });
+          const files = await Promise.all(
+            pictureData.map((value) => compressImage(value.imgUrl as File))
+          );
+          files.forEach((file) => picturesForUpload.append("images", file));
 
           uploadedImagesRes = (
             await axios.post<imageUploadApiResponse>(
@@ -197,7 +199,9 @@ const ProfileEdit = () => {
       } catch (error) {
         addToast({
           title: "Error updating profile",
-          description: "An error occurred while updating your profile",
+          description:
+            (axios.isAxiosError(error) && error.response?.data?.error) ||
+            "An error occurred while updating your profile",
           color: "danger",
         });
       } finally {
