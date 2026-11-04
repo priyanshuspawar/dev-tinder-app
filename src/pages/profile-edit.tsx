@@ -24,7 +24,7 @@ import {
   EditSkillsDropdown,
 } from "@/components/profile-edit/edit-skills";
 import EditEssentials from "@/components/profile-edit/edit-essentials";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { SlideDescription } from "@/components/feed-card";
 import { Icon } from "@iconify/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,6 +55,8 @@ const ProfileEdit = () => {
   const navigate = useNavigate();
   const { max, min } = useMemo(() => getMinMaxDate(), []);
   const context = useOutletContext<OutletContext>();
+  // opened from the dashboard's "complete your profile" gate: save → back to the feed
+  const isOnboarding = Boolean(useLocation().state?.onboarding);
 
   // Form state
   const {
@@ -96,17 +98,11 @@ const ProfileEdit = () => {
       return res.data.user;
     },
     onSuccess: () => {
-      addToast({
-        title: "Profile updated successfully",
-        description: "Your profile has been updated",
-        color: "success",
-      });
-      if (context.isBottomNavActive) {
-        navigate("/dashboard/profile");
-      }
+      addToast({ title: "Your details are updated", color: "success" });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
+      queryClient.invalidateQueries({ queryKey: ["profile-completion"] });
     },
   });
 
@@ -150,7 +146,8 @@ const ProfileEdit = () => {
     async (data: UpdateProfile) => {
       try {
         if (!isDirty) {
-          navigate("/dashboard/profile");
+          if (isOnboarding) navigate("/dashboard");
+          else addToast({ title: "No changes to save", color: "default" });
           return;
         }
 
@@ -196,6 +193,7 @@ const ProfileEdit = () => {
         const savedUser = await mutateProfile(payload);
         // defaultValues only apply on mount; reset to what the server saved
         reset(toFormValues(savedUser));
+        if (isOnboarding) navigate("/dashboard");
       } catch (error) {
         addToast({
           title: "Error updating profile",
@@ -206,7 +204,7 @@ const ProfileEdit = () => {
         setIsFormLoading(false);
       }
     },
-    [isDirty, navigate, mutateProfile, reset]
+    [isDirty, isOnboarding, navigate, mutateProfile, reset]
   );
 
   // Memoized values
@@ -227,14 +225,15 @@ const ProfileEdit = () => {
     <div className="w-full h-full lg:w-[24rem] lg:h-[90%] shadow-lg shadow-default-200/35 rounded-lg relative overflow-hidden select-none">
       {!isFullModePreview && context.isBottomNavActive && (
         <div className="flex justify-center items-center relative bg-secondary-100 p-2 text-center border-b border-b-secondary-50">
-          <span className="text-xl font-semibold">Edit Info</span>
+          {/* bottom nav is hidden on this route, so mobile needs a way out */}
           <button
-            onClick={handleSubmit(onSubmit)}
-            className="absolute right-5 font-semibold text-sm cursor-pointer text-primary-600 hover:text-primary-300"
-            aria-label="Save profile changes"
+            onClick={() => navigate(isOnboarding ? "/dashboard" : "/dashboard/profile")}
+            className="absolute left-5 font-semibold text-sm cursor-pointer text-primary-600 hover:text-primary-300"
+            aria-label="Go back"
           >
-            Done
+            Back
           </button>
+          <span className="text-xl font-semibold">Edit Info</span>
         </div>
       )}
 
@@ -560,20 +559,20 @@ const ProfileEdit = () => {
           </div>
         </div>
 
-        {/* Submit button */}
-        {!context.isBottomNavActive && (
-          <span className="w-full flex justify-center">
+        {/* Save: floats over the scrolling card (content has mb-24 room for it);
+            the field drawer (z-40) covers it while open */}
+        {currentTab === "edit" && !isFormLoading && (
+          <div className="absolute bottom-5 inset-x-0 z-30 flex justify-center pointer-events-none">
             <Button
               color="primary"
               type="submit"
               variant="shadow"
               radius="full"
-              disabled={isFormLoading}
-              className="font-semibold tracking-normal text-lg"
+              className="pointer-events-auto font-semibold tracking-normal text-lg px-10"
             >
-              Save
+              {isOnboarding ? "Save & continue" : "Save"}
             </Button>
-          </span>
+          </div>
         )}
       </form>
     </div>

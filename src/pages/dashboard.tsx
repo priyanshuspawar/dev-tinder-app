@@ -84,7 +84,7 @@ const Dashboard = () => {
           color="danger"
           variant="shadow"
           onClick={() => {
-            navigation("/dashboard/profile/edit");
+            navigation("/dashboard/profile/edit", { state: { onboarding: true } });
           }}
         >
           Please Complete Your Profile to 70%
