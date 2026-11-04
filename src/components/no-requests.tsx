@@ -21,7 +21,7 @@ const NoRequests = () => {
         <p className="font-medium text-default-500 text-sm tracking-wide text-center my-6">
           Matches will appear here once you start to like people. You can
           message them directly from here when you're ready to spark up the
-          bondig
+          bonding
         </p>
       </div>
     </div>

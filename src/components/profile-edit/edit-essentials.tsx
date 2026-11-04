@@ -1,12 +1,14 @@
-import { cn, getAge } from "@/utils/helpers";
+import { cn, distanceLabel, getAge } from "@/utils/helpers";
 import { Divider } from "@heroui/react";
 import { Icon } from "@iconify/react";
+import useAuthStore from "@/store/authStore";
 const EditEssentials = ({
   setActiveDropDown,
   setIsOpen,
   dateOfBirth,
   gender,
   education,
+  location,
   isReadyOnly = false,
   selfView = false,
 }: {
@@ -15,9 +17,14 @@ const EditEssentials = ({
   dateOfBirth: string | undefined | null;
   gender: "male" | "female" | "other" | undefined;
   education: string | null | undefined;
+  location?: { coordinates?: [number, number] }; // the other person's location
   isReadyOnly?: boolean;
   selfView?: boolean;
 }) => {
+  const { user } = useAuthStore();
+  const distance = selfView
+    ? null
+    : distanceLabel(user?.essentials?.location?.coordinates, location?.coordinates);
   const handleOpenDropdown = (panelName: string) => {
     if (!setActiveDropDown || !setIsOpen) return;
     setActiveDropDown(panelName);
@@ -55,12 +62,12 @@ const EditEssentials = ({
                     </div>
                   </>
                 )}
-                {!selfView && (
+                {distance && (
                   <>
                     <Divider className="my-1" />
                     <div className="flex items-center gap-2 text-xs md:text-sm ">
                       <Icon icon={"tabler:location"} className="" />
-                      <span className="capitalize">16 Killometers away</span>
+                      <span>{distance}</span>
                     </div>
                   </>
                 )}

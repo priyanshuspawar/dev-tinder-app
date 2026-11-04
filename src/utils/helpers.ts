@@ -1,5 +1,6 @@
 import { clsx, ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { getDistance } from "geolib";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import isToday from "dayjs/plugin/isToday";
@@ -12,6 +13,18 @@ dayjs.extend(isToday);
 dayjs.extend(isYesterday);
 export function cn(...classes: ClassValue[]) {
   return twMerge(clsx(classes));
+}
+
+// "697 meters away" / "1.2 km away" between two [lng, lat] points; null if either is missing.
+export function distanceLabel(from?: number[], to?: number[]) {
+  if (from?.length !== 2 || to?.length !== 2) return null;
+  const meters = getDistance(
+    { lng: from[0], lat: from[1] },
+    { lng: to[0], lat: to[1] }
+  );
+  return meters < 1000
+    ? `${meters} meters away`
+    : `${(meters / 1000).toFixed(1)} km away`;
 }
 
 // Date-picker bounds for ages 18–99 (exact dates, not whole years).

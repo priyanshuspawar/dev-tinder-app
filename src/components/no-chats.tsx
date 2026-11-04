@@ -30,7 +30,7 @@ const NoChats = () => {
         <h3 className="text-xl font-bold">Say Hello 👋</h3>
         <p className="font-medium text-default-500 text-sm tracking-wide text-center my-4">
           Looking to strike up a conversation? when you match with others, you
-          can sed them a message under "Matches"
+          can send them a message under "Matches"
         </p>
       </div>
     </div>

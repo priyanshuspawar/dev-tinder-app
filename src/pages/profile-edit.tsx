@@ -389,6 +389,7 @@ const ProfileEdit = () => {
                     <EditGoal value={user.lookingFor} isReadOnly />
                     <EditEssentials
                       isReadyOnly
+                      selfView
                       dateOfBirth={user.dateOfBirth}
                       education={getValues("education")}
                       gender={getValues("gender")}

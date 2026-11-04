@@ -9,13 +9,13 @@ import {
 } from "motion/react";
 import { useRef, useState } from "react";
 import { Icon } from "@iconify/react";
-import { cn, getAge } from "@/utils/helpers";
+import { cn, distanceLabel, getAge } from "@/utils/helpers";
 import useSideBarStore from "@/store/sidebarStore";
 import EditGoal from "./profile-edit/edit-goal";
 import EditEssentials from "./profile-edit/edit-essentials";
 import EditAbout from "./profile-edit/edit-about";
 import { EditSkills } from "./profile-edit/edit-skills";
-import { getDistance } from "geolib";
+
 import useAuthStore from "@/store/authStore";
 
 type Props = feedUser & {
@@ -350,26 +350,13 @@ export const SlideDescription = ({
   };
 
   const element = selfProfileView ? getPropForPreview() : getPropForFeed();
-  const distance = getDistance(
-    {
-      lng: user?.essentials.location.coordinates?.[0] ?? 0,
-      lat: user?.essentials.location.coordinates?.[1] ?? 0,
-    },
-    {
-      lng: location?.length == 2 ? location[0] : 0,
-      lat: location?.length == 2 ? location[1] : 0,
-    }
-  );
+  const distance = distanceLabel(user?.essentials?.location?.coordinates, location);
   return (
     <>
-      {element?.key == "location" && location && (
+      {element?.key == "location" && distance && (
         <span className="flex items-center gap-1 my-1 font-medium text-sm">
           <Icon icon={"akar-icons:location"} className="text-white" />
-          <span>
-            {distance < 1000
-              ? `${distance} meters away`
-              : `${(distance / 1000).toFixed(2)} km away`}
-          </span>
+          <span>{distance}</span>
         </span>
       )}
       {element?.key == "about" && (

@@ -170,6 +170,7 @@ const ProfilePage = () => {
           <EditGoal value={lookingFor} isReadOnly />
           <EditEssentials
             isReadyOnly
+            selfView
             {...{
               dateOfBirth,
               education: essentials?.education,
