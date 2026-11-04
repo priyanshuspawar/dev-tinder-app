@@ -1,25 +1,54 @@
-import { ConnectionRequests, UserProfile } from "@/queries/types";
 import { cn, getAge, getSlideImage } from "@/utils/helpers";
-import { useQueryClient } from "@tanstack/react-query";
-import { useOutletContext, useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Link, Navigate, useOutletContext, useParams } from "react-router-dom";
 import { Icon } from "@iconify/react";
 import { useState } from "react";
+import { Spinner } from "@heroui/react";
 import EditGoal from "@/components/profile-edit/edit-goal";
 import EditEssentials from "@/components/profile-edit/edit-essentials";
 import EditAbout from "@/components/profile-edit/edit-about";
 import { EditSkills } from "@/components/profile-edit/edit-skills";
 import { SlideDescription } from "@/components/feed-card";
+import { getRequestsReceived } from "@/queries/profile";
+import useAuthStore from "@/store/authStore";
+
 const ConnectionProfileView = () => {
   const { id: userId } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
-  const connectionRequests = queryClient.getQueryData([
-    "request-received",
-  ]) as ConnectionRequests;
-  const [requestUser] = connectionRequests.filter(
-    (connection) => connection.fromUserId._id === userId
-  );
-  const user = queryClient.getQueryData(["user"]) as UserProfile;
-  const userSkills = user.skills.map((v) => v.label);
+  // subscribe (not getQueryData): works on refresh and reacts to accept/reject
+  const { data: connectionRequests, isPending } = useQuery({
+    queryKey: ["request-received"],
+    queryFn: getRequestsReceived,
+  });
+  const { user } = useAuthStore();
+  const { isBottomNavActive } = useOutletContext<{
+    isFullModeActive: boolean;
+    isBottomNavActive: boolean;
+  }>();
+  const [isFullModeActive, setIsFullModeActive] = useState(true);
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  // desktop-only page; mobile reviews requests on its own screen
+  if (isBottomNavActive) {
+    return <Navigate to="/dashboard/connections/review" replace />;
+  }
+  if (isPending) {
+    return <Spinner />;
+  }
+  const requestUser = connectionRequests?.find(
+    (request) => request.fromUserId._id === userId
+  )?.fromUserId;
+  if (!requestUser) {
+    return (
+      <div className="flex flex-col items-center gap-2 text-center">
+        <p className="text-default-500">This request is no longer pending.</p>
+        <Link to="/dashboard" className="text-primary-500 font-semibold">
+          Back to matching
+        </Link>
+      </div>
+    );
+  }
+
+  const userSkills = user?.skills.map((v) => v.label);
   const {
     firstName,
     dateOfBirth,
@@ -29,23 +58,12 @@ const ConnectionProfileView = () => {
     skills,
     gender,
     lookingFor,
-  } = requestUser.fromUserId;
-  const { isButtomNavActive } = useOutletContext<{
-    isFullModeActive: boolean;
-    isButtomNavActive: boolean;
-  }>();
-  const navigation = useNavigate();
-  if (isButtomNavActive) {
-    navigation("/dashboard", {
-      replace: true,
-    });
-  }
-  const [isFullModeActive, setIsFullModeActive] = useState(true);
+  } = requestUser;
   const toggleFullMode = () => {
     setIsFullModeActive(!isFullModeActive);
   };
-  const [activeSlide, setActiveSlide] = useState(0);
   const handleTabClick = () => {
+    if (pictures.length === 0) return;
     setActiveSlide((activeSlide + 1) % pictures.length);
   };
 

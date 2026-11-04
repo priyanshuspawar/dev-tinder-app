@@ -1,26 +1,26 @@
 import { getProfilePhoto } from "@/utils/helpers";
 import { Avatar, AvatarGroup, Divider, Spinner } from "@heroui/react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Icon } from "@iconify/react";
-import { Link, redirect, useNavigate } from "react-router-dom";
-import { ConnectionRequests } from "@/queries/types";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { getRequestsReceived } from "@/queries/profile";
 import { useMediaQuery } from "usehooks-ts";
 import useConnectionStore from "@/store/connectionStore";
 import { Dot } from "lucide-react";
 import { useNotificationStore } from "@/store/notificationStore";
 const ConnectionsPage = () => {
-  const queryClient = useQueryClient();
-  const requestsReceived = queryClient.getQueryData([
-    "request-received",
-  ]) as ConnectionRequests;
-  // const { connectionRequests: requestsReceived } = useConnectionStore();
+  const { data: requestsReceived } = useQuery({
+    queryKey: ["request-received"],
+    queryFn: getRequestsReceived,
+  });
   const numberOfRequests = requestsReceived?.length ?? 0;
   const navigation = useNavigate();
   const { userConnections, onlineUsers } = useConnectionStore();
   const { newChatMessages } = useNotificationStore();
 
+  // mobile-only screen; on desktop the sidebar shows requests + chats
   const isBottomNavActive = useMediaQuery("(max-width: 895px)");
-  if (!isBottomNavActive) redirect("/dashboard");
+  if (!isBottomNavActive) return <Navigate to="/dashboard" replace />;
   return (
     <div className="w-full p-3 flex flex-col gap-2">
       {/* follow requests */}
@@ -33,7 +33,7 @@ const ConnectionsPage = () => {
         >
           <AvatarGroup max={2} className="pointer-events-none">
             {numberOfRequests ? (
-              requestsReceived.map((request) => (
+              requestsReceived?.map((request) => (
                 <Avatar
                   key={request._id}
                   size="sm"
@@ -54,7 +54,7 @@ const ConnectionsPage = () => {
               <span className="text-xs font-medium text-gray-400">
                 {requestsReceived[0].fromUserId.firstName}
                 {requestsReceived.length > 1 &&
-                  `+ ${requestsReceived.length} ..`}
+                  ` + ${requestsReceived.length - 1} more`}
               </span>
             )}
           </div>

@@ -4,8 +4,9 @@ const validateAge = (d: string | null) => {
   if (!d) return true; // Allow null values
   const dob = new Date(d);
   const today = new Date();
+  // allowed ages: 18–99 (same rule as the server's profileValidator.ts)
   const minAgeDate = new Date(
-    today.getFullYear() - 15,
+    today.getFullYear() - 18,
     today.getMonth(),
     today.getDate()
   );

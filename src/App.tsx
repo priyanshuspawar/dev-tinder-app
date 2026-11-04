@@ -16,14 +16,12 @@ import { useQuery } from "@tanstack/react-query";
 import RequestReview from "./pages/request-review";
 import { userQueryOptions } from "./queries/profile";
 import ConnectionProfileView from "./pages/connection-profile-view";
-import { useMediaQuery } from "usehooks-ts";
 import Chat from "./pages/chat";
 import ConnectionsPage from "./pages/connectionsPage";
 import ProfileSettings from "./pages/settings";
 const App = () => {
   // Queries
   const { isLoading } = useQuery(userQueryOptions);
-  const isBottomNavActive = useMediaQuery("(max-width: 895px)");
   if (isLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center">
@@ -55,12 +53,9 @@ const App = () => {
               element={<ConnectionProfileView />}
             />
             <Route path="chat/:connectionId" element={<Chat />} />
-            {isBottomNavActive && (
-              <Route path="connections" element={<ConnectionsPage />} />
-            )}
-            {isBottomNavActive && (
-              <Route path="connections/review" element={<RequestReview />} />
-            )}
+            {/* always registered: conditional routes 404'd on desktop / after resize */}
+            <Route path="connections" element={<ConnectionsPage />} />
+            <Route path="connections/review" element={<RequestReview />} />
             <Route path="profile" element={<ProfileView />} />
             <Route path="profile/edit" element={<ProfileEdit />} />
             <Route path="profile/settings" element={<ProfileSettings />} />

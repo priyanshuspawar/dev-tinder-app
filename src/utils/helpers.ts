@@ -14,11 +14,11 @@ export function cn(...classes: ClassValue[]) {
   return twMerge(clsx(classes));
 }
 
+// Date-picker bounds for ages 18–99 (exact dates, not whole years).
 export function getMinMaxDate() {
-  const today = new Date();
-  const minDate = `${today.getFullYear() - 100}-01-01`;
-  const maxDate = `${today.getFullYear() - 18}-12-31`;
-  return { min: minDate, max: maxDate };
+  const yearsAgo = (n: number) =>
+    dayjs().subtract(n, "year").format("YYYY-MM-DD");
+  return { min: yearsAgo(99), max: yearsAgo(18) };
 }
 export function getAge(d: string | null | undefined) {
   if (!d) {

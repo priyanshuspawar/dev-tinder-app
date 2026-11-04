@@ -289,14 +289,13 @@ const DashboardLayout = () => {
                   </span>
                 </Link>
               )}
-              <div>
-                <span className="bg-secondary-50 flex p-1.5 rounded-full cursor-pointer">
-                  <Icon
-                    className="text-xl"
-                    icon={"ant-design:setting-filled"}
-                  />
-                </span>
-              </div>
+              <Link
+                to="profile/settings"
+                aria-label="Settings"
+                className="bg-secondary-50 flex p-1.5 rounded-full cursor-pointer"
+              >
+                <Icon className="text-xl" icon={"ant-design:setting-filled"} />
+              </Link>
             </div>
 
             <Tabs variant="underlined" color="primary">

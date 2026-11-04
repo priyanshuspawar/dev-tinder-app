@@ -5,9 +5,9 @@ import useConnectionStore from "@/store/connectionStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import useSocket from "@/store/socketStore";
 import { addToast, Card } from "@heroui/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, LogOut } from "lucide-react";
-import { redirect, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const ProfileSettings = () => {
   const { socket } = useSocket();
@@ -16,25 +16,26 @@ const ProfileSettings = () => {
   const { resetConnections } = useConnectionStore();
   const { resetNotifications } = useNotificationStore();
   const { removeAllChats } = useChatsStore();
+  const queryClient = useQueryClient();
   const { mutateAsync } = useMutation({
     mutationKey: ["logout"],
     mutationFn: logout,
   });
-  if (!socket) return;
   const handleLogout = async () => {
     try {
       await mutateAsync();
-      //clear stores
+      socket?.disconnect();
+      // clear all client state so the next user on this browser starts clean
+      queryClient.clear();
       logoutStore();
       resetConnections();
       resetNotifications();
       removeAllChats();
-      socket.disconnect();
       addToast({
         title: "Successfully logged out",
         color: "success",
       });
-      redirect("/");
+      navigation("/login", { replace: true });
     } catch (error) {
       addToast({
         title: "Logout failed",
@@ -45,11 +46,9 @@ const ProfileSettings = () => {
   return (
     <div className="py-10 px-4 w-full h-full flex flex-col gap-2">
       <span className="flex items-center">
-        <ChevronLeft
-          onClick={() => {
-            navigation(-1);
-          }}
-        />
+        <button aria-label="Back" onClick={() => navigation(-1)}>
+          <ChevronLeft />
+        </button>
         <h1 className="font-semibold">Settings</h1>
       </span>
       <Card
