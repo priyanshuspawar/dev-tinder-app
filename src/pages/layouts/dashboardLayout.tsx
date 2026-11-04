@@ -267,7 +267,7 @@ const DashboardLayout = () => {
           !isFullModeActive && (
             <section className="">
               <div className="w-full py-1.5 px-3.5 bg-gradient-to-bl from-secondary-200 to-secondary-500">
-                <h2 className="w-full font-medium text-xl">DevTinder ✨</h2>
+                <img src="/brand/devtinder-code-heart-horizontal-white.svg" alt="DevTinder" className="h-8" />
               </div>
             </section>
           )}

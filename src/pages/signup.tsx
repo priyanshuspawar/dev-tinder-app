@@ -9,7 +9,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { getApiError } from "@/utils/helpers";
-import { AcmeIcon } from "@/components/acme";
 import { useNavigate } from "react-router-dom";
 
 const signupSchema = z.object({
@@ -84,7 +83,7 @@ export default function Signup() {
     <div className="flex min-h-screen py-8 w-full items-center justify-center">
       <div className="flex w-full max-w-sm flex-col gap-2 rounded-large">
         <div className="flex flex-col items-center pb-2">
-          <AcmeIcon size={60} />
+          <img src="/brand/devtinder-code-heart-icon.svg" alt="DevTinder" className="w-16 h-16" />
           <p className="text-xl font-medium">Create your account</p>
           <p className="text-small text-default-500">
             Sign up to start meeting developers near you

@@ -18,7 +18,6 @@ import {
 import { Icon } from "@iconify/react";
 import { cn } from "@heroui/react";
 
-import { AcmeIcon } from "./acme";
 import clsx from "clsx";
 
 const menuItems = ["About", "Privacy Policy", "Safety", "Support"];
@@ -30,7 +29,8 @@ export default function NavbarMain(props: NavbarProps) {
     <Navbar
       {...props}
       className={clsx(
-        isMenuOpen ? "bg-background" : "bg-transparent",
+        // scrim so the nav reads over the busy hero photo
+        isMenuOpen ? "bg-background" : "!bg-transparent bg-gradient-to-b from-background/90 via-background/50 to-transparent",
         "top-0 absolute transition-colors duration-200 ease-in-out"
       )}
       position="static"
@@ -41,17 +41,18 @@ export default function NavbarMain(props: NavbarProps) {
         wrapper: "w-full justify-center bg-transparent",
         item: "hidden md:flex",
       }}
-      height="60px"
+      height="72px"
       isBlurred={false}
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
     >
       {/* Left Content */}
       <NavbarBrand className="flex items-center">
-        <div className="rounded-full bg-foreground text-background">
-          <AcmeIcon size={34} />
-        </div>
-        <span className="ml-2 text-xl font-extrabold">DevTinder</span>
+        <img
+          src="/brand/devtinder-code-heart-horizontal.svg"
+          alt="DevTinder"
+          className="h-11 md:h-12 drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]"
+        />
       </NavbarBrand>
 
       {/* Center Content */}
@@ -114,7 +115,7 @@ export default function NavbarMain(props: NavbarProps) {
         </NavbarItem>
       </NavbarContent>
 
-      <NavbarMenuToggle className="text-default-400 md:hidden" />
+      <NavbarMenuToggle className="text-foreground md:hidden" />
 
       <NavbarMenu className="top-[calc(var(--navbar-height)_-_1px)] max-h-fit bg-background pb-6 pt-6 shadow-medium backdrop-blur-md backdrop-saturate-150 transition-all transform ease-out duration-100">
         <NavbarMenuItem className="mb-4">

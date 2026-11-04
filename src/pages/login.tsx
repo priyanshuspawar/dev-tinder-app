@@ -6,7 +6,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { getApiError } from "@/utils/helpers";
-import { AcmeIcon } from "@/components/acme";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const loginSchema = z.object({
@@ -87,7 +86,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen w-full items-center justify-center">
       <div className="flex w-full max-w-sm flex-col gap-4 rounded-large">
         <div className="flex flex-col items-center pb-2">
-          <AcmeIcon size={60} />
+          <img src="/brand/devtinder-code-heart-icon.svg" alt="DevTinder" className="w-16 h-16" />
           <p className="text-xl font-medium">Welcome Back</p>
           <p className="text-small text-default-500">
             Log in to your account to continue
