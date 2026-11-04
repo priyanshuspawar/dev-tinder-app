@@ -4,7 +4,8 @@ import { Icon } from "@iconify/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
+import { getApiError } from "@/utils/helpers";
 import { AcmeIcon } from "@/components/acme";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -75,12 +76,11 @@ export default function LoginPage() {
       await mutateAsync(data);
     } catch (error) {
       console.error("Login failed", error);
-      if (error instanceof AxiosError) {
-        setError("root", {
-          message:
-            error.response?.data.message ?? "Failed to login please try again",
-        });
+      const { message, fields } = getApiError(error, "Failed to log in, please try again");
+      for (const [name, msg] of Object.entries(fields)) {
+        if (name === "email" || name === "password") setError(name, { message: msg }, { shouldFocus: true });
       }
+      setError("root", { message });
     }
   };
   return (

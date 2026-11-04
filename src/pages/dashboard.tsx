@@ -11,7 +11,7 @@ import { feedUser } from "@/queries/types";
 import { addToast, Avatar, Button, Chip, Spinner } from "@heroui/react";
 import { motion } from "framer-motion";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { cn, getProfilePhoto } from "@/utils/helpers";
+import { cn, getApiError, getProfilePhoto } from "@/utils/helpers";
 import { Bug } from "lucide-react";
 import useAuthStore from "@/store/authStore";
 
@@ -45,9 +45,9 @@ const Dashboard = () => {
     swipe.mutate(
       { status, userId: topCard._id },
       {
-        onError: () => {
+        onError: (err) => {
           setLastSwiped(null);
-          addToast({ title: "Couldn't save that swipe, try again", color: "danger" });
+          addToast({ title: "Couldn't save that swipe", description: getApiError(err).message, color: "danger" });
         },
       }
     );

@@ -8,11 +8,13 @@ const EditAbout = ({
   isReadOnly = false,
   value,
   firstName = "",
+  error,
 }: {
   register?: UseFormRegister<UpdateProfile>;
   isReadOnly?: boolean;
   value?: string;
   firstName?: string;
+  error?: string;
 }) => {
   if (isReadOnly) {
     return (
@@ -38,14 +40,16 @@ const EditAbout = ({
         <Textarea
           {...register("about")}
           aria-label="about yourself"
-          color="secondary"
+          isInvalid={!!error}
+          errorMessage={error}
+          color={error ? "danger" : "secondary"}
           variant="bordered"
           classNames={{
             input: "placeholder:text-foreground/50",
             inputWrapper:
               "bg-secondary-50 border-secondary-100 data-[hover=true]:border-secondary-200",
           }}
-          placeholder={`Tell us about ${firstName}, their interests, and hobbies.`}
+          placeholder="Tell people about yourself, your interests and hobbies (max 75 characters)"
         />
       </div>
     );

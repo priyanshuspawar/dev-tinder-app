@@ -1,10 +1,11 @@
 import { useState, useCallback, useMemo } from "react";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { Controller, FieldErrors, useFieldArray, useForm } from "react-hook-form";
 import MainCard from "@/components/main-card";
 import {
   cn,
   compressImage,
   getAge,
+  getApiError,
   getMinMaxDate,
   getSlideImage,
   isValidDate,
@@ -67,6 +68,7 @@ const ProfileEdit = () => {
     getValues,
     setError,
     clearErrors,
+    setFocus,
     reset,
     formState: { errors, isDirty },
   } = useForm<UpdateProfile>({
@@ -143,6 +145,43 @@ const ProfileEdit = () => {
     setActiveDropDown(null);
   }, []);
 
+  // Point the user at the field that failed (client- or server-side):
+  // fields edited in the bottom drawer get the drawer opened, the rest get focus.
+  const revealFieldErrors = useCallback(
+    (fields: Record<string, string>) => {
+      const names = Object.keys(fields) as (keyof UpdateProfile)[];
+      names.forEach((name) =>
+        setError(name, { type: "server", message: fields[name] })
+      );
+      const first = names[0];
+      if (!first) return;
+      setCurrentTab("edit");
+      if (["dateOfBirth", "gender", "education"].includes(first)) {
+        setActiveDropDown(first);
+        setIsOpen(true);
+      } else if (first === "about") {
+        setTimeout(() => setFocus("about"), 0);
+      }
+    },
+    [setError, setFocus]
+  );
+
+  // zod rejected the form before it was sent
+  const onInvalid = useCallback(
+    (formErrors: FieldErrors<UpdateProfile>) => {
+      const fields = Object.fromEntries(
+        Object.entries(formErrors).map(([k, v]) => [k, String(v?.message ?? "Invalid value")])
+      );
+      revealFieldErrors(fields);
+      addToast({
+        title: "Please fix the highlighted field",
+        description: Object.values(fields)[0],
+        color: "danger",
+      });
+    },
+    [revealFieldErrors]
+  );
+
   const onSubmit = useCallback(
     async (data: UpdateProfile) => {
       try {
@@ -197,18 +236,14 @@ const ProfileEdit = () => {
         reset(toFormValues(savedUser));
         if (isOnboarding) navigate("/dashboard");
       } catch (error) {
-        addToast({
-          title: "Error updating profile",
-          description:
-            (axios.isAxiosError(error) && error.response?.data?.error) ||
-            "An error occurred while updating your profile",
-          color: "danger",
-        });
+        const { message, fields } = getApiError(error, "Couldn't save your profile, please try again");
+        revealFieldErrors(fields);
+        addToast({ title: "Couldn't save your profile", description: message, color: "danger" });
       } finally {
         setIsFormLoading(false);
       }
     },
-    [isDirty, isOnboarding, navigate, mutateProfile, reset]
+    [isDirty, isOnboarding, navigate, mutateProfile, reset, revealFieldErrors]
   );
 
   // Memoized values
@@ -243,7 +278,7 @@ const ProfileEdit = () => {
 
       <form
         id="update-form"
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
         className="bg-background shadow-large lg:rounded-xl w-full h-full"
       >
         {isFormLoading ? (
@@ -296,7 +331,7 @@ const ProfileEdit = () => {
             {currentTab === "edit" ? (
               <div className="px-2.5 py-0.5 mb-24">
                 <ProfilePhotoUpload MAX_IMAGES={MAX_IMAGES} control={control} />
-                <EditAbout register={register} />
+                <EditAbout register={register} error={errors.about?.message} />
                 <EditGoal control={control} />
                 <EditSkills
                   fields={fields}
@@ -523,6 +558,9 @@ const ProfileEdit = () => {
                     </ul>
                   )}
                 />
+                {errors.gender && (
+                  <span className="text-xs text-danger">{errors.gender.message}</span>
+                )}
                 <Button color="primary" variant="flat" onPress={closeDrawer}>
                   Done
                 </Button>
@@ -542,6 +580,8 @@ const ProfileEdit = () => {
                 <h2 className="font-semibold">Enter Your Highest Education</h2>
                 <Input
                   {...register("education")}
+                  isInvalid={!!errors.education}
+                  errorMessage={errors.education?.message}
                   className="w-full border-secondary"
                   title="Education Information"
                   aria-label="Enter your highest education level"

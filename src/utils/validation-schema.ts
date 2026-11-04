@@ -41,7 +41,7 @@ export const updateSchema = z.object({
     })
     .optional(),
 
-  about: z.string().trim().optional(),
+  about: z.string().trim().max(75, "About can be at most 75 characters").optional(),
   gender: z.enum(["male", "female", "other"]).optional(),
 
   skills: z

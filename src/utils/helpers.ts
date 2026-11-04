@@ -1,3 +1,4 @@
+import axios from "axios";
 import { clsx, ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { getDistance } from "geolib";
@@ -177,4 +178,31 @@ export async function compressImage(file: File, maxSide = 1080, quality = 0.8): 
   } catch {
     return file;
   }
+}
+
+// Turn any API failure into something a person can read.
+// Understands every error shape the server sends: { message }, { error },
+// { message, errors: { field: msg } } and express-validator's { errors: [{ path, msg }] }.
+export function getApiError(
+  err: unknown,
+  fallback = "Something went wrong, please try again"
+): { message: string; fields: Record<string, string> } {
+  const fields: Record<string, string> = {};
+  if (!axios.isAxiosError(err)) return { message: fallback, fields };
+  if (!err.response) {
+    return { message: "Can't reach the server. Check your connection and try again.", fields };
+  }
+  const data = err.response.data ?? {};
+  const list = Array.isArray(data.errors) ? data.errors : Array.isArray(data.message) ? data.message : null;
+  if (list) {
+    for (const e of list) if (e?.path && e?.msg) fields[e.path] ??= e.msg;
+  } else if (data.errors && typeof data.errors === "object") {
+    Object.assign(fields, data.errors);
+  }
+  const message =
+    (typeof data.message === "string" && data.message) ||
+    (typeof data.error === "string" && data.error) ||
+    Object.values(fields)[0] ||
+    fallback;
+  return { message, fields };
 }

@@ -7,7 +7,8 @@ import { Icon } from "@iconify/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
+import { getApiError } from "@/utils/helpers";
 import { AcmeIcon } from "@/components/acme";
 import { useNavigate } from "react-router-dom";
 
@@ -68,13 +69,13 @@ export default function Signup() {
         });
       }
     } catch (error) {
-      if (error instanceof AxiosError) {
-        setError("root", {
-          message:
-            error.response?.data.message ??
-            "Failed to sign up try again after some time",
-        });
+      const { message, fields } = getApiError(error, "Failed to sign up, please try again");
+      for (const [name, msg] of Object.entries(fields)) {
+        if (name in signupSchema.shape) {
+          setError(name as keyof SignupFormInputs, { message: msg }, { shouldFocus: true });
+        }
       }
+      setError("root", { message });
       console.error("Signup failed", error);
     }
   };
