@@ -1,6 +1,10 @@
 import axios, { AxiosError } from "axios";
 import { ConnectionRequests, feedUser, ProfileApiResponse } from "./types";
-import { UseQueryOptions } from "@tanstack/react-query";
+import {
+  UseQueryOptions,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import useAuthStore from "@/store/authStore";
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -82,6 +86,52 @@ export const sendRequest = async ({
   return response.data;
 };
 
+// Swipe on the top feed card. Removes it immediately, restores it if the
+// request fails, and refetches the feed once all in-flight swipes finish
+// (refetching earlier could resurrect a card whose swipe is still saving).
+export const useSwipe = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["swipe"],
+    mutationFn: sendRequest,
+    onMutate: async ({ userId }) => {
+      await queryClient.cancelQueries({ queryKey: ["feed"] });
+      const previousFeed = queryClient.getQueryData<feedUser[]>(["feed"]);
+      queryClient.setQueryData<feedUser[]>(["feed"], (old) =>
+        old?.filter((u) => u._id !== userId)
+      );
+      return { previousFeed };
+    },
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData(["feed"], context?.previousFeed);
+    },
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: ["swipe"] }) === 1) {
+        queryClient.invalidateQueries({ queryKey: ["feed"] });
+      }
+    },
+  });
+};
+
+// Undo the last swipe: delete it on the server and put the card back on top.
+export const useUndoSwipe = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (user: feedUser) => {
+      await axios.delete(`${API_URL}/request/undo/${user._id}`, {
+        withCredentials: true,
+      });
+      return user;
+    },
+    onSuccess: (user) => {
+      queryClient.setQueryData<feedUser[]>(["feed"], (old) => [
+        user,
+        ...(old ?? []).filter((u) => u._id !== user._id),
+      ]);
+    },
+  });
+};
+
 export const reviewRequest = async ({
   status,
   userId,
@@ -96,6 +146,33 @@ export const reviewRequest = async ({
     { withCredentials: true }
   );
   return response.data;
+};
+
+// Accept/reject a received request: optimistically drop it from the list,
+// roll back on failure, then refresh requests + connections (chat list).
+export const useReviewRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: reviewRequest,
+    onMutate: async ({ requestId }) => {
+      await queryClient.cancelQueries({ queryKey: ["request-received"] });
+      const previousRequests = queryClient.getQueryData<ConnectionRequests>([
+        "request-received",
+      ]);
+      queryClient.setQueryData<ConnectionRequests>(
+        ["request-received"],
+        (old) => old?.filter((r) => r._id !== requestId)
+      );
+      return { previousRequests };
+    },
+    onError: (_err, _vars, context) => {
+      queryClient.setQueryData(["request-received"], context?.previousRequests);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["request-received"] });
+      queryClient.invalidateQueries({ queryKey: ["user-connections"] });
+    },
+  });
 };
 
 export const connectionProfileView = async (

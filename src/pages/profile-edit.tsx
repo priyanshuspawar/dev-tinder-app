@@ -14,7 +14,7 @@ import { DatePicker, Button, Input, Spinner, addToast } from "@heroui/react";
 import { updateSchema } from "@/utils/validation-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { imageUploadApiResponse } from "@/queries/types";
+import { imageUploadApiResponse, UserProfile } from "@/queries/types";
 import CardHeader from "@/components/profile-edit/CardHeader";
 import ProfilePhotoUpload from "@/components/profile-edit/profile-photo-upload";
 import EditAbout from "@/components/profile-edit/edit-about";
@@ -30,13 +30,24 @@ import { Icon } from "@iconify/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useAuthStore from "@/store/authStore";
 
-const MAX_IMAGES = 6;
+const MAX_IMAGES = 5; // must match the server's pictures limit (models/user.ts)
 
 type UpdateProfile = z.infer<typeof updateSchema>;
 
 interface OutletContext {
   isBottomNavActive: boolean;
 }
+
+// Map a saved user to form values (used for initial values and after each save)
+const toFormValues = (user: UserProfile | null | undefined): UpdateProfile => ({
+  about: user?.about || "",
+  dateOfBirth: user?.dateOfBirth?.split("T")[0],
+  gender: user?.gender,
+  education: user?.essentials?.education,
+  lookingFor: user?.lookingFor,
+  pictures: user?.pictures ?? [],
+  skills: user?.skills ?? [],
+});
 
 const ProfileEdit = () => {
   const queryClient = useQueryClient();
@@ -57,19 +68,7 @@ const ProfileEdit = () => {
     formState: { errors, isDirty },
   } = useForm<UpdateProfile>({
     resolver: zodResolver(updateSchema),
-    defaultValues: useMemo(
-      () => ({
-        about: user?.about || "",
-        dateOfBirth: user?.dateOfBirth?.split("T")[0],
-        gender: user?.gender,
-        location: user?.essentials?.location,
-        education: user?.essentials?.education,
-        lookingFor: user?.lookingFor,
-        pictures: user?.pictures ?? [],
-        skills: user?.skills ?? [],
-      }),
-      [user]
-    ),
+    defaultValues: useMemo(() => toFormValues(user), [user]),
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -89,9 +88,12 @@ const ProfileEdit = () => {
   // Mutation
   const { mutateAsync: mutateProfile } = useMutation({
     mutationFn: async (payload: any) => {
-      await axios.patch(import.meta.env.VITE_API_URL + "/profile", payload, {
-        withCredentials: true,
-      });
+      const res = await axios.patch<{ user: UserProfile }>(
+        import.meta.env.VITE_API_URL + "/profile",
+        payload,
+        { withCredentials: true }
+      );
+      return res.data.user;
     },
     onSuccess: () => {
       addToast({
@@ -191,8 +193,9 @@ const ProfileEdit = () => {
           },
         };
 
-        await mutateProfile(payload);
-        reset();
+        const savedUser = await mutateProfile(payload);
+        // defaultValues only apply on mount; reset to what the server saved
+        reset(toFormValues(savedUser));
       } catch (error) {
         addToast({
           title: "Error updating profile",

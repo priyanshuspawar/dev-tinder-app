@@ -39,7 +39,7 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: (localStorage.getItem("email") as string) || "",
-      password: (localStorage.getItem("password") as string) || "",
+      password: "",
     },
   });
   const toggleVisibility = () => setIsVisible(!isVisible);
@@ -64,14 +64,13 @@ export default function LoginPage() {
   });
   const onSubmit = async (data: LoginFormInputs) => {
     try {
+      // "Remember me" keeps only the email. Never store the password.
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true");
         localStorage.setItem("email", data.email);
-        localStorage.setItem("password", data.password);
       } else {
         localStorage.removeItem("rememberMe");
         localStorage.removeItem("email");
-        localStorage.removeItem("password");
       }
       await mutateAsync(data);
     } catch (error) {

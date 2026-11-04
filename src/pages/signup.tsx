@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { Button, Input, Checkbox, Link, Divider } from "@heroui/react";
+import { Button, Input, Checkbox, Link, Divider, addToast } from "@heroui/react";
 import { Icon } from "@iconify/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -58,17 +58,11 @@ export default function Signup() {
         { withCredentials: true }
       );
       if (response.status === 200) {
-        //WIP: add toast
-        // await toast.promise(
-        //   new Promise((res) => {
-        //     setTimeout(() => res(true), 2000);
-        //   }),
-        //   {
-        //     loading: "Account created successfully",
-        //     success: "Redirecting to login page",
-        //   }
-        // );
-        // Redirect to login page or any other page
+        addToast({
+          title: "Account created",
+          description: "Log in to start matching.",
+          color: "success",
+        });
         navigate("/login", {
           replace: true,
         });
@@ -90,9 +84,9 @@ export default function Signup() {
       <div className="flex w-full max-w-sm flex-col gap-2 rounded-large">
         <div className="flex flex-col items-center pb-2">
           <AcmeIcon size={60} />
-          <p className="text-xl font-medium">Welcome Back</p>
+          <p className="text-xl font-medium">Create your account</p>
           <p className="text-small text-default-500">
-            Log in to your account to continue
+            Sign up to start meeting developers near you
           </p>
           <Link
             href="/"

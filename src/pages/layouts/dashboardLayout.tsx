@@ -3,15 +3,14 @@ import useSideBarStore from "@/store/sidebarStore";
 import { useMediaQuery } from "usehooks-ts";
 import { Icon } from "@iconify/react";
 import { cn, getProfilePhoto } from "@/utils/helpers";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getConnections,
   getRequestsReceived,
-  reviewRequest,
+  useReviewRequest,
 } from "@/queries/profile";
 import Loader from "@/components/Loader";
-import { Avatar, Button, Tab, Tabs } from "@heroui/react";
-import { feedUser } from "@/queries/types";
+import { Avatar, Button, Spinner, Tab, Tabs } from "@heroui/react";
 import { Check, Dot, X } from "lucide-react";
 import NoRequests from "@/components/no-requests";
 import NoChats from "@/components/no-chats";
@@ -56,12 +55,14 @@ const DashboardLayout = () => {
     lng: number;
   } | null>(null);
 
-  useEffect(() => {
+  const requestLocation = () => {
+    setError(null);
     if (!navigator.geolocation) {
-      setError("Geolocation is not supported by your browser");
+      setError("Your browser doesn't support location, so DevTinder can't find developers near you.");
       return;
     }
-
+    // While the permission prompt is open neither callback fires
+    // (timeout only starts after permission), so the UI shows a waiting screen.
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setGeoLocation({
@@ -71,11 +72,18 @@ const DashboardLayout = () => {
         setLocation([position.coords.longitude, position.coords.latitude]);
       },
       (err) => {
-        setError("Location permission denied or unavailable");
+        setError(
+          err.code === err.PERMISSION_DENIED
+            ? "Location access is blocked. Allow location for this site in your browser settings, then try again."
+            : "Couldn't get your location. Check that location services are on, then try again."
+        );
         console.error(err);
-      }
+      },
+      { timeout: 15000 }
     );
-  }, []);
+  };
+
+  useEffect(requestLocation, []);
 
   const { data: requestsReceived, isLoading } = useQuery({
     queryKey: ["request-received"],
@@ -90,25 +98,9 @@ const DashboardLayout = () => {
   const isBottomNavActive = useMediaQuery("(max-width: 895px)");
   const location = useLocation();
   const navigation = useNavigate();
-  const { mutateAsync } = useMutation({
-    mutationFn: reviewRequest,
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["feed"] });
-      const previousFeed = queryClient.getQueryData(["todos"]);
-      queryClient.setQueryData(["feed"], (old: feedUser[]) => [
-        ...old.slice(1),
-      ]);
-      return { previousFeed };
-    },
-    onError: (context: { previousFeed: feedUser[] }) => {
-      queryClient.setQueryData(["feed"], context.previousFeed);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["feed"] });
-    },
-  });
+  const { mutate: reviewRequest } = useReviewRequest();
   const { setSocket, socket: socketSaved } = useSocket();
-  const { setUserConnections, addOnlineUser, removeOnlineUser } =
+  const { setUserConnections, addOnlineUser, removeOnlineUser, onlineUsers } =
     useConnectionStore();
   useEffect(() => {
     if (userConnections) {
@@ -133,18 +125,23 @@ const DashboardLayout = () => {
       removeOnlineUser(userId);
       // setUserStatus(userId, undefined);
     };
-    if (socket) {
-      socket.on("onlineFriends", getOnlineFriends);
-      socket.on("friendOnline", handleFriendOnline);
-
-      socket.on("friendOffline", handleFriendOffline);
-    }
+    // server pushes these when someone sends/undoes a request or accepts yours
+    const refreshRequests = () =>
+      queryClient.invalidateQueries({ queryKey: ["request-received"] });
+    const refreshConnections = () =>
+      queryClient.invalidateQueries({ queryKey: ["user-connections"] });
+    socket.on("onlineFriends", getOnlineFriends);
+    socket.on("friendOnline", handleFriendOnline);
+    socket.on("friendOffline", handleFriendOffline);
+    socket.on("requestsChanged", refreshRequests);
+    socket.on("connectionsChanged", refreshConnections);
     return () => {
       socket.disconnect();
       socket.off("friendOnline", handleFriendOnline);
       socket.off("onlineFriends", getOnlineFriends);
-
       socket.off("friendOffline", handleFriendOffline);
+      socket.off("requestsChanged", refreshRequests);
+      socket.off("connectionsChanged", refreshConnections);
     };
   }, [geoLocation]);
   const [limit] = useState(10);
@@ -232,10 +229,24 @@ const DashboardLayout = () => {
       socketSaved.off("chatUpdate", handleChatUpdate);
     };
   }, [socketSaved?.connected, page]);
-  if (error) {
+  if (error || (user && !geoLocation)) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <p>Please Provide location service to continue</p>
+      <div className="w-full h-screen flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <Icon icon="akar-icons:location" className="w-10 h-10 text-primary-500" />
+        <h2 className="text-xl font-semibold">
+          {error ? "Location needed" : "Waiting for location access"}
+        </h2>
+        <p className="max-w-sm text-sm text-default-500">
+          {error ??
+            "DevTinder uses your location to show developers near you. Allow access in your browser's prompt to continue."}
+        </p>
+        {error ? (
+          <Button color="primary" radius="full" onPress={requestLocation}>
+            Try again
+          </Button>
+        ) : (
+          <Spinner size="sm" />
+        )}
       </div>
     );
   }
@@ -320,8 +331,9 @@ const DashboardLayout = () => {
                             size="sm"
                             variant="solid"
                             className="rounded-full"
+                            aria-label={`Accept ${request.fromUserId.firstName}`}
                             onPress={() => {
-                              mutateAsync({
+                              reviewRequest({
                                 status: "accepted",
                                 userId: request.fromUserId._id,
                                 requestId: request._id,
@@ -336,9 +348,10 @@ const DashboardLayout = () => {
                             variant="solid"
                             size="sm"
                             className="rounded-full"
+                            aria-label={`Reject ${request.fromUserId.firstName}`}
                             onPress={() => {
-                              mutateAsync({
-                                status: "accepted",
+                              reviewRequest({
+                                status: "rejected",
                                 userId: request.fromUserId._id,
                                 requestId: request._id,
                               });
@@ -365,11 +378,13 @@ const DashboardLayout = () => {
                           className="w-full"
                         >
                           <div className="w-full flex items-center gap-2 cursor-pointer p-2 hover:scale-105 transition-all duration-300 ease-in-out rounded-xl">
-                            <Avatar src={connection.pictures[0].imgUrl} />
+                            <Avatar src={getProfilePhoto(connection.pictures)} />
                             <h3 className="font-medium flex-grow">
                               {connection.firstName}
                             </h3>
-                            <Dot className="text-success-500" />
+                            {onlineUsers.has(connection._id) && (
+                              <Dot className="text-success-500" aria-label="online" />
+                            )}
                           </div>
                         </Link>
                       );

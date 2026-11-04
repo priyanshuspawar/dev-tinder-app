@@ -1,7 +1,13 @@
 import { feedUser } from "@/queries/types";
 import { Chip } from "@heroui/react";
-import { motion, useMotionValue, useTransform } from "motion/react";
-import { Dispatch } from "react";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useTransform,
+  type PanInfo,
+} from "motion/react";
+import { useRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import { cn, getAge } from "@/utils/helpers";
 import useSideBarStore from "@/store/sidebarStore";
@@ -9,18 +15,18 @@ import EditGoal from "./profile-edit/edit-goal";
 import EditEssentials from "./profile-edit/edit-essentials";
 import EditAbout from "./profile-edit/edit-about";
 import { EditSkills } from "./profile-edit/edit-skills";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { sendRequest } from "@/queries/profile";
 import { getDistance } from "geolib";
 import useAuthStore from "@/store/authStore";
 
 type Props = feedUser & {
-  activeSlide: number;
-  setActiveSlide: Dispatch<React.SetStateAction<number>>;
+  onSwipe: (status: "interested" | "ignore") => void;
+  onUndo?: () => void; // undefined = nothing to undo
 };
 
+const SWIPE_DISTANCE = 100; // px dragged past which a release counts as a swipe
+const SWIPE_VELOCITY = 500; // px/s flick that counts as a swipe
+
 const FeedCard = ({
-  _id: cardId,
   pictures,
   essentials,
   firstName,
@@ -29,28 +35,13 @@ const FeedCard = ({
   lookingFor,
   gender,
   about,
-  activeSlide,
-  setActiveSlide,
+  onSwipe,
+  onUndo,
 }: Props) => {
-  const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const { mutateAsync } = useMutation({
-    mutationFn: sendRequest,
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["feed"] });
-      const previousFeed = queryClient.getQueryData(["todos"]);
-      queryClient.setQueryData(["feed"], (old: feedUser[]) => [
-        ...old.slice(1),
-      ]);
-      return { previousFeed };
-    },
-    onError: (context: { previousFeed: feedUser[] }) => {
-      queryClient.setQueryData(["feed"], context.previousFeed);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["feed"] });
-    },
-  });
+  // per-card state: the parent keys this component by user id, so it resets per card
+  const [activeSlide, setActiveSlide] = useState(0);
+  const leaving = useRef(false);
 
   const x = useMotionValue(0);
   const offsetBoundary = 150;
@@ -72,35 +63,18 @@ const FeedCard = ({
   );
 
   const userSkills = user?.skills.map((e) => e.label);
-  // Handle swipe removal
-  const handleDragEnd = (userId: string) => {
-    if (x.get() > 100) {
-      // interested
-      mutateAsync({
-        status: "interested",
-        userId,
-      });
-    }
-    if (x.get() < -100) {
-      mutateAsync({
-        status: "ignore",
-        userId,
-      });
-    }
+  // Fly the card off-screen, then report the swipe (parent removes the card).
+  const swipeAway = async (direction: "left" | "right") => {
+    if (leaving.current) return; // ignore double clicks / drag+click
+    leaving.current = true;
+    await animate(x, direction === "right" ? 600 : -600, { duration: 0.25 });
+    onSwipe(direction === "right" ? "interested" : "ignore");
   };
-  // handle button removal
-  const handleBtnClick = (direction: "left" | "right", userId: string) => {
-    if (direction === "left") {
-      mutateAsync({
-        status: "ignore",
-        userId,
-      });
-    } else if (direction === "right") {
-      mutateAsync({
-        status: "interested",
-        userId,
-      });
-    }
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    const { offset, velocity } = info;
+    if (offset.x > SWIPE_DISTANCE || velocity.x > SWIPE_VELOCITY) swipeAway("right");
+    else if (offset.x < -SWIPE_DISTANCE || velocity.x < -SWIPE_VELOCITY) swipeAway("left");
+    else animate(x, 0, { type: "spring", stiffness: 400, damping: 30 }); // not far enough: snap back
   };
   const handleTabClick = () => {
     if (x.get() != 0) {
@@ -114,15 +88,16 @@ const FeedCard = ({
     return;
   }
   return (
-    <div key={cardId} className="w-full h-full relative">
-      {/*rm classname = "realive" */}
-      {/* Draggable Card */}
+    <div className="w-full h-full relative">
+      {/* Draggable Card: follows the pointer 1:1; release decides swipe vs snap-back */}
       <motion.div
         drag={isFullModeActive ? false : "x"}
-        dragConstraints={{ left: 0, right: 0 }}
-        onDragEnd={() => handleDragEnd(cardId)}
+        dragMomentum={false}
+        onDragEnd={handleDragEnd}
         style={{ x, opacity, rotate }}
-        className="w-full h-full"
+        // select-none: dragging over text would start a native text drag, which
+        // cancels the pointer gesture and leaves the card stuck mid-swipe
+        className="w-full h-full select-none"
       >
         <div
           className={cn(
@@ -262,18 +237,21 @@ const FeedCard = ({
       >
         <div className="flex justify-center gap-6">
           <ActionBtn
-            onClick={() => {}}
+            label="Undo last swipe"
+            onClick={onUndo}
             icon="ci:undo"
             color="text-warning-400"
           />
           <ActionBtn
-            onClick={() => handleBtnClick("left", cardId)}
+            label={`Pass on ${firstName}`}
+            onClick={() => swipeAway("left")}
             icon="maki:cross"
             color="text-danger-400"
             scale={leftScale}
           />
           <ActionBtn
-            onClick={() => handleBtnClick("right", cardId)}
+            label={`Like ${firstName}`}
+            onClick={() => swipeAway("right")}
             icon="solar:heart-bold"
             color="text-success-400"
             scale={rightScale}
@@ -290,15 +268,24 @@ export default FeedCard;
 const ActionBtn = ({
   icon,
   color,
+  label,
   scale = 1,
   onClick,
 }: {
   icon: string;
   color: string;
+  label: string;
   scale?: any;
-  onClick: () => void;
+  onClick?: () => void; // undefined renders the button disabled
 }) => (
-  <motion.button onClick={onClick} whileTap={{ scale: 0.9 }}>
+  <motion.button
+    onClick={onClick}
+    disabled={!onClick}
+    aria-label={label}
+    title={label}
+    whileTap={onClick ? { scale: 0.9 } : undefined}
+    className="disabled:opacity-40 disabled:cursor-not-allowed"
+  >
     <motion.div
       className="flex items-center justify-center w-[50px] h-[50px] rounded-full bg-default shadow transition-all duration-100 ease-out hover:scale-110 hover:bg-default-300"
       style={{ scale }}

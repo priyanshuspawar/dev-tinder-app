@@ -84,8 +84,9 @@ const ConnectionsPage = () => {
                       {newChatMessages[connectionId] &&
                         newChatMessages[connectionId].length > 0 && (
                           <span className="text-[0.65rem]  lg:text-xs font-semibold">
-                            {newChatMessages[connectionId].length + " "}
-                            new messages
+                            {newChatMessages[connectionId].length === 1
+                              ? "1 new message"
+                              : `${newChatMessages[connectionId].length} new messages`}
                           </span>
                         )}
                     </div>

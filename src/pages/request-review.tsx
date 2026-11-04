@@ -3,8 +3,8 @@ import EditAbout from "@/components/profile-edit/edit-about";
 import EditEssentials from "@/components/profile-edit/edit-essentials";
 import EditGoal from "@/components/profile-edit/edit-goal";
 import { EditSkills } from "@/components/profile-edit/edit-skills";
-import { reviewRequest } from "@/queries/profile";
-import { ConnectionRequests, feedUser } from "@/queries/types";
+import { getRequestsReceived, useReviewRequest } from "@/queries/profile";
+import { feedUser } from "@/queries/types";
 import { getAge, getProfilePhoto, getSlideImage } from "@/utils/helpers";
 import {
   Avatar,
@@ -15,14 +15,15 @@ import {
   cn,
 } from "@heroui/react";
 import { Icon } from "@iconify/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 const RequestReview = () => {
-  const queryClient = useQueryClient();
-  const requestsReceived = queryClient.getQueryData([
-    "request-received",
-  ]) as ConnectionRequests;
+  // subscribe (not getQueryData) so the list re-renders on accept/reject and works on refresh
+  const { data: requestsReceived } = useQuery({
+    queryKey: ["request-received"],
+    queryFn: getRequestsReceived,
+  });
   const numberOfRequests = requestsReceived?.length ?? 0;
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [activeSlide, setActiveSlide] = useState(0);
@@ -35,39 +36,14 @@ const RequestReview = () => {
   const toggleFullMode = () => {
     setFullMode(!isFullModePreview);
   };
-  const { mutateAsync } = useMutation({
-    mutationFn: reviewRequest,
-    onMutate: (data: {
-      status: "accepted" | "rejected";
-      requestId: string;
-      userId: string;
-    }) => {
-      queryClient.cancelQueries({ queryKey: ["request-received"] });
-      const previousRequests = queryClient.getQueryData([
-        "request-received",
-      ]) as ConnectionRequests;
-      queryClient.setQueryData(
-        ["request-received"],
-        (prev: ConnectionRequests) =>
-          prev.filter((val) => val._id != data.requestId)
-      );
-      return { previousRequests };
-    },
-    onError: (context: { previousRequest: ConnectionRequests }) => {
-      // setConnectionRequests(context.previousRequest);
-      queryClient.setQueryData(["request-received"], context.previousRequest);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["request-received"] });
-    },
-  });
+  const { mutate: reviewRequest } = useReviewRequest();
   return (
     <div className="flex p-3 w-full h-full">
       {numberOfRequests ? (
         <div className="w-full h-full">
           <h3 className="text-sm mb-3 font-semibold">Request Received</h3>
           <ul className="flex flex-col gap-2 w-full">
-            {requestsReceived.map((request) => (
+            {requestsReceived?.map((request) => (
               <li key={request._id} className="w-full flex items-center gap-1">
                 <div
                   onClick={() => {
@@ -87,7 +63,7 @@ const RequestReview = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      mutateAsync({
+                      reviewRequest({
                         status: "accepted",
                         userId: request.fromUserId._id,
                         requestId: request._id,
@@ -99,7 +75,7 @@ const RequestReview = () => {
                   </button>
                   <button
                     onClick={() => {
-                      mutateAsync({
+                      reviewRequest({
                         status: "rejected",
                         userId: request.fromUserId._id,
                         requestId: request._id,
