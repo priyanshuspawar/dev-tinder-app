@@ -57,4 +57,4 @@ The frontend is a static Vite build that deploys to **Vercel** (`vercel.json` al
 
 ## License
 
-[MIT](LICENSE) © Priyanshu Singh Pawar. Demo avatars are [DiceBear "Notionists"](https://www.dicebear.com/styles/notionists/) (CC0).
+[MIT](LICENSE) © Priyanshu Singh Pawar. Demo profile photos are free-license portraits from [Unsplash](https://unsplash.com/license).

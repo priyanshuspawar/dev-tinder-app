@@ -283,10 +283,12 @@ const DashboardLayout = () => {
                   </span>
                 </Link>
               ) : (
-                <Link to={"/dashboard"}>
-                  <span className="w-7 flex cursor-pointer hover:scale-110 transition-all duration-200 ease-linear items-center justify-center font-bold aspect-square bg-background rounded-full">
-                    D
-                  </span>
+                <Link to={"/dashboard"} aria-label="Back to the feed">
+                  <img
+                    src="/brand/devtinder-code-heart-icon.svg"
+                    alt=""
+                    className="w-9 h-9 hover:scale-110 transition-transform duration-200 drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+                  />
                 </Link>
               )}
               <Link
